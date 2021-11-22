@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ceptic.Stream
 {
@@ -29,9 +30,6 @@ namespace Ceptic.Stream
         private readonly BlockingCollection<StreamFrame> managerSendBuffer;
         private const int bufferWaitTimeout = 100;
 
-        private readonly Thread sendThread;
-        private readonly Thread receiveThread;
-
         private bool isTimedOut = false;
         private bool shouldStop = false;
         private bool fullyStopped = false;
@@ -52,11 +50,6 @@ namespace Ceptic.Stream
 
             cancellationSource = new CancellationTokenSource();
             cancellationToken = cancellationSource.Token;
-
-            sendThread = new Thread(new ThreadStart(SendMonitor));
-            sendThread.IsBackground = true;
-            receiveThread = new Thread(new ThreadStart(ReceiveMonitor));
-            receiveThread.IsBackground = true;
         }
 
         public Guid GetManagerId()
@@ -72,8 +65,9 @@ namespace Ceptic.Stream
         public void Start()
         {
             StartTimers();
-            sendThread.Start();
-            receiveThread.Start();
+
+            new Task(() => SendMonitor(), cancellationToken, TaskCreationOptions.LongRunning).Start();
+            new Task(() => ReceiveMonitor(), cancellationToken, TaskCreationOptions.LongRunning).Start();
         }
 
         private void SendMonitor()
@@ -192,12 +186,20 @@ namespace Ceptic.Stream
                     else if (isServer && frame.IsHeader())
                     {
                         var handler = CreateHandler(frame.GetStreamId());
+                        // if handler couldn't be created, something is wrong and should stop manager
+                        if (handler == null)
+                        {
+                            Stop($"couldn't create handler - possible duplicate for handler {frame.GetStreamId()}");
+                            break;
+                        }
                         if (IsHandlerLimitReached())
                         {
                             handler.SendClose("Handler limit reached");
+                            RemoveHandler(handler);
                             continue;
                         }
-                        // TODO: create thread/task to run removable.HandleNewConnection(handler);
+                        // create task to run removable.HandleNewConnection to continue comms with handler
+                        new Task(() => removable.HandleNewConnection(handler), cancellationToken, TaskCreationOptions.LongRunning).Start();
                     }
                     // otherwise try to pass frame to appropriate handler
                     else
@@ -209,7 +211,7 @@ namespace Ceptic.Stream
                         }
                         catch (StreamHandlerStoppedException)
                         {
-
+                            
                         }
                     }
                 }
@@ -268,7 +270,40 @@ namespace Ceptic.Stream
 
         public StreamHandler CreateHandler(Guid streamId)
         {
-            throw new NotImplementedException();
+            var handler = new StreamHandler(streamId, settings, managerSendBuffer);
+            bool added = streams.TryAdd(streamId, handler);
+            return added ? handler : null;
+        }
+
+        private void RemoveHandler(Guid streamId)
+        {
+            StreamHandler handler;
+            var removed = streams.TryRemove(streamId, out handler);
+            if (removed)
+            {
+                handler?.Stop();
+                handler?.Dispose();
+            }
+        }
+
+        private void RemoveHandler(StreamHandler handler)
+        {
+            RemoveHandler(handler.GetStreamId());
+            handler?.Stop();
+            handler?.Dispose();
+        }
+
+        private void StopHandler(Guid streamId)
+        {
+            RemoveHandler(streamId);
+        }
+
+        private void StopAllHandlers()
+        {
+            foreach (var handler in streams.Values)
+            {
+                RemoveHandler(handler);
+            }
         }
         #endregion
 
@@ -280,11 +315,17 @@ namespace Ceptic.Stream
 
         public void Stop(string reason)
         {
-            if (!shouldStop && reason.Length > 0)
-                stopReason = reason;
-            shouldStop = true;
-            cancellationSource.Cancel();
-            socket.Close();
+            if (!shouldStop)
+            {
+                shouldStop = true;
+                if (reason.Length > 0)
+                    stopReason = reason;
+                if (!alreadyRemoved)
+                    alreadyRemoved = true;
+                    StopAllHandlers();
+                cancellationSource.Cancel();
+                socket.Close();
+            }
         }
 
         public bool IsFullyStopped()
@@ -304,11 +345,11 @@ namespace Ceptic.Stream
             managerSendBuffer.Dispose();
             cancellationSource.Dispose();
         }
+        #endregion
 
         ~StreamManager()
         {
             Dispose();
         }
-        #endregion
     }
 }
