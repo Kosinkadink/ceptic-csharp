@@ -40,7 +40,7 @@ namespace Ceptic.Net
 
         public void Send(byte[] msg)
         {
-            byte[] totalSize = Encoding.UTF8.GetBytes(string.Format("D16", msg.Length));
+            byte[] totalSize = Encoding.UTF8.GetBytes(string.Format("{0,16}", msg.Length));
             SendRaw(totalSize);
             SendRaw(msg);
         }
@@ -84,8 +84,8 @@ namespace Ceptic.Net
         public byte[] RecvBytes(int bytes)
         {
             // get length of bytes
-            var sizeToReceive = 0;
             var sizeBuffer = RecvRaw(16);
+            int sizeToReceive;
             try
             {
                 sizeToReceive = int.Parse(Encoding.UTF8.GetString(sizeBuffer));

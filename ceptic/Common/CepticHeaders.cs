@@ -17,7 +17,7 @@ namespace Ceptic.Common
 
         public void SetErrors(JArray errors)
         {
-            headers.Add(HeaderType.Errors, errors);
+            headers[HeaderType.Errors] = errors;
         }
         #endregion
 
@@ -29,7 +29,7 @@ namespace Ceptic.Common
 
         public void SetContentLength(long contentLength)
         {
-            headers.Add(HeaderType.ContentLength, contentLength);
+            headers[HeaderType.ContentLength] = contentLength;
         }
 
         public bool HasContentLength()
@@ -42,12 +42,12 @@ namespace Ceptic.Common
         #region ContentType
         public string GetContentType()
         {
-            return headers[HeaderType.ContentType].ToObject<string>();
+            return headers[HeaderType.ContentType]?.ToObject<string>();
         }
 
         public void SetContentType(string contentType)
         {
-            headers.Add(HeaderType.ContentType, contentType);
+            headers[HeaderType.ContentType] = contentType;
         }
 
         public bool HasContentType()
@@ -60,12 +60,12 @@ namespace Ceptic.Common
         #region Encoding
         public string GetEncoding()
         {
-            return headers[HeaderType.Encoding].ToObject<string>();
+            return headers[HeaderType.Encoding]?.ToObject<string>();
         }
 
         public void SetEncoding(string encoding)
         {
-            headers.Add(HeaderType.Encoding, encoding);
+            headers[HeaderType.Encoding] = encoding;
         }
 
         public bool HasEncoding()
@@ -78,12 +78,12 @@ namespace Ceptic.Common
         #region Authorization
         public string GetAuthorization()
         {
-            return headers[HeaderType.Authorization].ToObject<string>();
+            return headers[HeaderType.Authorization]?.ToObject<string>();
         }
 
         public void SetAuthorization(string authorization)
         {
-            headers.Add(HeaderType.Authorization, authorization);
+            headers[HeaderType.Authorization] = authorization;
         }
 
         public bool HasAuthorization()
@@ -96,13 +96,13 @@ namespace Ceptic.Common
         #region Exchange
         public bool GetExchange()
         {
-            var value = headers[HeaderType.Exchange].ToObject<bool?>();
+            var value = headers[HeaderType.Exchange]?.ToObject<bool?>();
             return value != null && value == true;
         }
 
         public void SetExchange(bool exchange)
         {
-            headers.Add(HeaderType.Exchange, exchange);
+            headers[HeaderType.Exchange] = exchange;
         }
         #endregion
 
@@ -114,7 +114,7 @@ namespace Ceptic.Common
 
         public void SetFiles(JArray files)
         {
-            headers.Add(HeaderType.Files, files);
+            headers[HeaderType.Files] = files;
         }
         #endregion
 

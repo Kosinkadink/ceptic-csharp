@@ -25,7 +25,7 @@ namespace Ceptic.Encode
         public byte[] Decode(byte[] data)
         {
             // decode in reverse order
-            for (int i = encoderList.Count; i >= 0; i--)
+            for (int i = encoderList.Count-1; i >= 0; i--)
             {
                 data = encoderList[i].Decode(data);
             }

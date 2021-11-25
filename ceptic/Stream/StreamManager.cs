@@ -48,6 +48,8 @@ namespace Ceptic.Stream
             this.removable = removable;
             this.isServer = isServer;
 
+            managerSendBuffer = new BlockingCollection<StreamFrame>(new ConcurrentQueue<StreamFrame>());
+
             cancellationSource = new CancellationTokenSource();
             cancellationToken = cancellationSource.Token;
         }
