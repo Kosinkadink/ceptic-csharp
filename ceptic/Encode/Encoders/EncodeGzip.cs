@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Ceptic.Encode.Encoders
 {
-    class EncodeGzip : IEncodeObject
+    public class EncodeGzip : IEncodeObject
     {
         public byte[] Encode(byte[] data)
         {

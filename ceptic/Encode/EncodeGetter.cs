@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Ceptic.Encode
 {
-    class EncodeGetter
+    public class EncodeGetter
     {
         public static EncodeHandler Get(string encodingString)
         {

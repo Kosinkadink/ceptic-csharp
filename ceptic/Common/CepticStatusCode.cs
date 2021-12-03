@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Ceptic.Common
 {
-    class CepticStatusCode
+    public class CepticStatusCode
     {
         public static readonly CepticStatusCode OK = new CepticStatusCode(200);
         public static readonly CepticStatusCode CREATED = new CepticStatusCode(201);

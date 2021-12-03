@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Ceptic.Encode.Exceptions
 {
-    class UnknownEncodingException : CepticException
+    public class UnknownEncodingException : CepticException
     {
         public UnknownEncodingException()
         {

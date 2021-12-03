@@ -291,8 +291,12 @@ namespace Ceptic.Stream
         private void RemoveHandler(StreamHandler handler)
         {
             RemoveHandler(handler.GetStreamId());
-            handler?.Stop();
-            handler?.Dispose();
+            try
+            {
+                handler?.Stop();
+                handler?.Dispose();
+            }
+            catch (ObjectDisposedException) { }
         }
 
         private void StopHandler(Guid streamId)
@@ -325,8 +329,17 @@ namespace Ceptic.Stream
                 if (!alreadyRemoved)
                     alreadyRemoved = true;
                     StopAllHandlers();
-                cancellationSource.Cancel();
-                socket.Close();
+                try
+                {
+                    cancellationSource.Cancel();
+                }
+                catch (ObjectDisposedException) { }
+                try
+                {
+                    socket.Close();
+                }
+                catch (ObjectDisposedException) { }
+                removable.RemoveManager(managerId);
             }
         }
 

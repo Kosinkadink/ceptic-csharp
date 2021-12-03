@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Ceptic.Common
 {
-    abstract class CepticHeaders
+    public abstract class CepticHeaders
     {
         protected JObject headers = new JObject();
 

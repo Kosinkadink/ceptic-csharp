@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Ceptic.Encode.Encoders
 {
-    class EncodeNone : IEncodeObject
+    public class EncodeNone : IEncodeObject
     {
         public byte[] Encode(byte[] data)
         {

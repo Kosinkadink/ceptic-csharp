@@ -3,10 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Ceptic.Client
+namespace Ceptic.Server
 {
-    class ClientSettings
+    public class ServerSettings
     {
+        public int port { get; }
         public string version { get; }
         public int headersMinSize { get; }
         public int headersMaxSize { get; }
@@ -17,18 +18,26 @@ namespace Ceptic.Client
         public int streamTimeout { get; }
         public int sendBufferSize { get; }
         public int readBufferSize { get; }
-        public int defaultPort { get; }
+        public int handlerMaxCount { get; }
+        public int requestQueueSize { get; }
+        public bool verbose { get; }
+        public bool daemon { get; }
 
-        public ClientSettings(
-            string version="1.0.0",
+        public ServerSettings(
+            int? port = null,
+            string version = "1.0.0",
             int headersMinSize = 1024000, int headersMaxSize = 1024000,
             int frameMinSize = 1024000, int frameMaxSize = 1024000,
             int bodyMax = 102400000,
             int streamMinTimeout = 1, int streamTimeout = 5,
             int readBufferSize = 102400000, int sendBufferSize = 102400000,
-            int? defaultPort = null)
+            int handlerMaxCount = 0,
+            int requestQueueSize = 10,
+            bool verbose = false,
+            bool daemon = false)
         {
             // TODO: add verification for settings
+            this.port = port ?? Constants.DEFAULT_PORT;
             this.version = version;
             this.headersMinSize = headersMinSize;
             this.headersMaxSize = headersMaxSize;
@@ -39,7 +48,11 @@ namespace Ceptic.Client
             this.streamTimeout = streamTimeout;
             this.readBufferSize = readBufferSize;
             this.sendBufferSize = sendBufferSize;
-            this.defaultPort = defaultPort ?? Constants.DEFAULT_PORT;
+            this.handlerMaxCount = handlerMaxCount;
+            this.requestQueueSize = requestQueueSize;
+            this.verbose = verbose;
+            this.daemon = daemon;
         }
+
     }
 }

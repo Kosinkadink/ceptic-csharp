@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Ceptic.Encode
 {
-    class EncodeType
+    public class EncodeType
     {
         public static readonly EncodeType None = new EncodeType("none", new EncodeNone());
         public static readonly EncodeType Base64 = new EncodeType("base64", new EncodeBase64());

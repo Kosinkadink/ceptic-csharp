@@ -12,7 +12,7 @@ using System.Threading;
 
 namespace Ceptic.Stream
 {
-    class StreamHandler : IDisposable
+    public class StreamHandler : IDisposable
     {
         private readonly BlockingCollection<StreamFrame> readBuffer;
         private readonly BlockingCollection<StreamFrame> managerSendBuffer;
@@ -408,7 +408,11 @@ namespace Ceptic.Stream
         public void Stop()
         {
             shouldStop = true;
-            cancellationSource.Cancel();
+            try
+            {
+                cancellationSource.Cancel();
+            }
+            catch (ObjectDisposedException) { }
         }
 
         public bool IsStopped()

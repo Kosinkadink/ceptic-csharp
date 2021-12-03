@@ -176,9 +176,11 @@ namespace Ceptic.Client
                 IPEndPoint endpoint = new IPEndPoint(ipAddress, request.GetPort());
 
                 // create socket
-                Socket rawSocket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                rawSocket.ReceiveTimeout = 5000;
-                rawSocket.SendTimeout = 5000;
+                Socket rawSocket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
+                {
+                    ReceiveTimeout = 5000,
+                    SendTimeout = 5000
+                };
                 // connect the socket to teh remove endpoint
                 try
                 {

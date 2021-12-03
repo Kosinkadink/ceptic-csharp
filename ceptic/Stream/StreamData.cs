@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Ceptic.Stream
 {
-    class StreamData
+    public class StreamData
     {
         private readonly CepticResponse response;
         private readonly byte[] data;

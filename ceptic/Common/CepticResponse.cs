@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Ceptic.Common
 {
-    class CepticResponse : CepticHeaders
+    public class CepticResponse : CepticHeaders
     {
         private readonly CepticStatusCode statusCode;
         private byte[] body;
@@ -32,6 +32,11 @@ namespace Ceptic.Common
         }
 
         public CepticResponse(CepticStatusCode statusCode, JArray errors) : this(statusCode, null, null, errors, null)
+        {
+
+        }
+
+        public CepticResponse(CepticStatusCode statusCode) : this(statusCode, null, null, null, null)
         {
 
         }

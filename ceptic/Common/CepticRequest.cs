@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Ceptic.Common
 {
-    class CepticRequest : CepticHeaders
+    public class CepticRequest : CepticHeaders
     {
         private readonly string command;
         private string endpoint;

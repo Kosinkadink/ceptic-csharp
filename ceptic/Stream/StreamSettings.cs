@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Ceptic.Stream
 {
-    class StreamSettings
+    public class StreamSettings
     {
         public readonly int sendBufferSize;
         public readonly int readBufferSize;
