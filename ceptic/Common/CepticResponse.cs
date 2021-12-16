@@ -78,7 +78,7 @@ namespace Ceptic.Common
         #region Data
         public byte[] GetData()
         {
-            return Encoding.UTF8.GetBytes($"{statusCode.GetValueString()}\r\n{JsonConvert.SerializeObject(headers)}");
+            return Encoding.UTF8.GetBytes($"{string.Format("{0,3}", statusCode.GetValueInt())}\r\n{JsonConvert.SerializeObject(headers)}");
         }
 
         public static CepticResponse FromData(string data)

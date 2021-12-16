@@ -100,7 +100,7 @@ namespace Ceptic.Stream
         public void OnTimedOutEvent(Object source)
         {
             isTimedOut = true;
-            Stop();
+            SendClose();
         }
         #endregion
 
@@ -354,7 +354,7 @@ namespace Ceptic.Stream
                 // check if max length provided and if past limit
                 if (maxLength > 0 && totalLength > maxLength)
                 {
-                    Stop();
+                    SendClose();
                     throw new StreamTotalDataSizeException($"total data received has surpassed maxLength of {maxLength}");
                 }
                 if (frame.IsResponse())
@@ -405,9 +405,12 @@ namespace Ceptic.Stream
         #endregion
 
         #region Stopped
-        public void Stop()
+        private void Stop()
         {
-            shouldStop = true;
+            if (!shouldStop)
+            {
+                shouldStop = true;
+            }   
             try
             {
                 cancellationSource.Cancel();

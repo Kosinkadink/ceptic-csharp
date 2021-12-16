@@ -103,10 +103,10 @@ namespace Ceptic.Endpoint
                 throw new EndpointManagerException($"endpoint '{endpoint}' cannot be found for command '{command}'");
             // get endpoint variable values from matcher and fill out Dictionary
             var values = new Dictionary<string, string>();
-            var index = 0;
+            var index = 1;
             foreach (var variableName in matchEndpointSaved.GetVariables())
             {
-                values.Add(variableName, matchCollection[index].Groups[1].Value);
+                values.Add(variableName, matchCollection[0].Groups[index].Value);
                 index++;
             }
             return new EndpointValue(matchEndpointSaved.GetEntry(), values, matchEndpointSaved.GetSettings());

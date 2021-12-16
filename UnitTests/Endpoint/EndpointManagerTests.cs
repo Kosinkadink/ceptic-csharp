@@ -4,12 +4,14 @@ using Ceptic.Endpoint.Exceptions;
 using Ceptic.Server;
 using NUnit.Framework;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace UnitTests.Endpoint
 {
     public class EndpointManagerTests
     {
 
+        private EndpointEntry basicEndpointEntry = new EndpointEntry((request, values) => new CepticResponse(CepticStatusCode.OK));
         private EndpointManager manager;
 
         [SetUp]
@@ -89,20 +91,18 @@ namespace UnitTests.Endpoint
             var command = "get";
             manager.AddCommand(command);
             var endpoint = "/";
-            var endpointEntry = new EndpointEntry((request, values) => new CepticResponse(CepticStatusCode.OK));
             // Act, Assert
-            Assert.That(() => manager.AddEndpoint(command, endpoint, endpointEntry), Throws.Nothing);
+            Assert.That(() => manager.AddEndpoint(command, endpoint, basicEndpointEntry), Throws.Nothing);
         }
 
         [Test]
-        public void AddEndpoint_CommandDoesNotExist_EndpointManagerException()
+        public void AddEndpoint_CommandDoesNotExist_ThrowsException()
         {
             // Arrange
             var command = "get";
             var endpoint = "/";
-            var endpointEntry = new EndpointEntry((request, values) => new CepticResponse(CepticStatusCode.OK));
             // Act, Assert
-            Assert.That(() => manager.AddEndpoint(command, endpoint, endpointEntry), Throws.Exception.TypeOf<EndpointManagerException>());
+            Assert.That(() => manager.AddEndpoint(command, endpoint, basicEndpointEntry), Throws.Exception.TypeOf<EndpointManagerException>());
         }
 
         [Test]
@@ -110,7 +110,6 @@ namespace UnitTests.Endpoint
         {
             // Arrange
             var command = "get";
-            var endpointEntry = new EndpointEntry((request, values) => new CepticResponse(CepticStatusCode.OK));
             var endpoints = new List<string>();
             // endpoint can be a single slash
             endpoints.Add("/");
@@ -154,16 +153,16 @@ namespace UnitTests.Endpoint
             {
                 // re-add command to make sure each endpoint is tested individually
                 manager.AddCommand(command);
-                Assert.That(() => manager.AddEndpoint(command, endpoint, endpointEntry), Throws.Nothing);
+                Assert.That(() => manager.AddEndpoint(command, endpoint, basicEndpointEntry), Throws.Nothing);
                 manager.RemoveCommand(command);
             }
         }
+
         [Test]
-        public void AddEndpoint_BadEndpoints_ThrowException()
+        public void AddEndpoint_BadEndpoints_ThrowsException()
         {
             // Arrange
             var command = "get";
-            var endpointEntry = new EndpointEntry((request, values) => new CepticResponse(CepticStatusCode.OK));
             var endpoints = new List<string>();
             // endpoint cannot be blank
             endpoints.Add("");
@@ -207,22 +206,21 @@ namespace UnitTests.Endpoint
             {
                 // re-add command to make sure each endpoint is tested individually
                 manager.AddCommand(command);
-                Assert.That(() => manager.AddEndpoint(command, endpoint, endpointEntry), Throws.Exception.TypeOf<EndpointManagerException>());
+                Assert.That(() => manager.AddEndpoint(command, endpoint, basicEndpointEntry), Throws.Exception.TypeOf<EndpointManagerException>());
                 manager.RemoveCommand(command);
             }
         }
 
         [Test]
-        public void AddEndpoint_EquivalentEndpoints_ThrowException()
+        public void AddEndpoint_EquivalentEndpoints_ThrowsException()
         {
             // Arrange
             var command = "get";
-            var endpointEntry = new EndpointEntry((request, values) => new CepticResponse(CepticStatusCode.OK));
             var endpoints = new List<string>();
             // add valid endpoints
             manager.AddCommand(command);
-            manager.AddEndpoint(command, "willalreadyexist", endpointEntry);
-            manager.AddEndpoint(command, "willalready/<exist>", endpointEntry);
+            manager.AddEndpoint(command, "willalreadyexist", basicEndpointEntry);
+            manager.AddEndpoint(command, "willalready/<exist>", basicEndpointEntry);
             // endpoint cannot already exist; slash at beginning or end makes no difference
             endpoints.Add("willalreadyexist");
             endpoints.Add("/willalreadyexist");
@@ -235,8 +233,127 @@ namespace UnitTests.Endpoint
             // Act, Assert
             foreach (var endpoint in endpoints)
             {
-                Assert.That(() => manager.AddEndpoint(command, endpoint, endpointEntry), Throws.Exception.TypeOf<EndpointManagerException>());
+                Assert.That(() => manager.AddEndpoint(command, endpoint, basicEndpointEntry), Throws.Exception.TypeOf<EndpointManagerException>());
             }
         }
+
+        [Test]
+        public void GetEndpoint()
+        {
+            // Arrange
+            var command = "get";
+            var endpoint = "/";
+            manager.AddCommand(command);
+            manager.AddEndpoint(command, endpoint, basicEndpointEntry);
+
+            // Act, Assert
+            EndpointValue endpointValue = null;
+            Assert.That(() => endpointValue = manager.GetEndpoint(command, endpoint), Throws.Nothing);
+            Assert.That(endpointValue, Is.Not.Null);
+            // variable map should be empty
+            Assert.That(endpointValue.GetValues(), Is.Empty);
+            // entry should be the same as put in
+            Assert.That(endpointValue.GetEntry(), Is.SameAs(basicEndpointEntry));
+        }
+
+        [Test]
+        public void GetEndpoint_WithVariables()
+        {
+            // Arrange
+            var command = "get";
+            manager.AddCommand(command);
+            var regex = new Regex("@", RegexOptions.Compiled);
+            var endpointTemplates = new List<string>()
+            {
+                "test/@",
+                "@/@",
+                "test/@/@",
+                "test/@/other/@",
+                "@/tests/variable0/@",
+                "@/@/@/@/@",
+                "@/@/@/@/@/test"
+            };
+            // Act, Assert
+            foreach (var endpointTemplate in endpointTemplates)
+            {
+                var count = 0;
+                var variableMap = new Dictionary<string, string>();
+                var preparedTemplate = endpointTemplate;
+                var preparedQuery = endpointTemplate;
+                var match = regex.Match(endpointTemplate);
+                while (match.Success)
+                {
+                    var name = $"variable{count}";
+                    var value = $"value{count}";
+                    variableMap.Add(name, value);
+                    preparedTemplate = regex.Replace(preparedTemplate, $"<{name}>", 1);
+                    preparedQuery = regex.Replace(preparedQuery, value, 1);
+                    match = match.NextMatch();
+                    count++;
+                }
+                // add endpoint
+                manager.AddEndpoint(command, preparedTemplate, basicEndpointEntry);
+                // get endpoint
+                var endpointValue = manager.GetEndpoint(command, preparedQuery);
+                // Assert
+                Assert.That(endpointValue, Is.Not.Null);
+                // returned values should have same count as template variables
+                Assert.That(endpointValue.GetValues().Count, Is.EqualTo(variableMap.Count));
+                foreach(var pair in variableMap)
+                {
+                    var variable = pair.Key;
+                    Assert.That(endpointValue.GetValues(), Contains.Key(variable), $"Expected variable '{variable}' not found");
+                    var expectedValue = pair.Value;
+                    var actualValue = endpointValue.GetValues().GetValueOrDefault(variable);
+                    Assert.That(actualValue, Is.EqualTo(expectedValue), $"Variable '{variable}' had value '{actualValue}' instead of '{expectedValue}");
+                }
+            }
+        }
+
+        [Test]
+        public void GetEndpoint_DoesNotExist_ThrowsException()
+        {
+            // Arrange
+            var command = "get";
+            manager.AddCommand(command);
+            var endpoints = new List<string>();
+            // can begin/end with 0 or many slashes
+            endpoints.Add("no_slashes_at_all");
+            endpoints.Add("/only_slash_at_start");
+            endpoints.Add("only_slash_at_end/");
+            endpoints.Add("/surrounding_slashes/");
+            endpoints.Add("////multiple_slashes/////////////////");
+            // endpoints can contain regex-life format, causing no issues
+            endpoints.Add("^[a-zA-Z0-9]+$");
+
+            // Act, Assert
+            foreach (var endpoint in endpoints)
+            {
+                Assert.That(() => manager.GetEndpoint(command, endpoint), Throws.Exception.TypeOf<EndpointManagerException>());
+            }
+        }
+
+        [Test]
+        public void GetEndpoint_CommandDoesNotExist_ThrowsException()
+        {
+            // Arrange, Act, Assert
+            Assert.That(() => manager.GetEndpoint("get", "/"), Throws.Exception.TypeOf<EndpointManagerException>());
+        }
+
+        [Test]
+        public void RemoveEndpoint()
+        {
+            // Arrange
+            var command = "get";
+            var endpoint = "/";
+            manager.AddCommand(command);
+            manager.AddEndpoint(command, endpoint, basicEndpointEntry);
+            // Act, Assert
+            var removed = manager.RemoveEndpoint(command, endpoint);
+            Assert.That(removed, Is.Not.Null);
+            Assert.That(removed.GetEntry(), Is.SameAs(basicEndpointEntry));
+        }
+
+
     }
 }

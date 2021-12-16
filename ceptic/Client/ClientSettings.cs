@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Ceptic.Client
 {
-    class ClientSettings
+    public class ClientSettings
     {
         public string version { get; }
         public int headersMinSize { get; }

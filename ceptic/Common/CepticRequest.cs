@@ -99,6 +99,11 @@ namespace Ceptic.Common
             return stream;
         }
 
+        public void SetStream(StreamHandler stream)
+        {
+            this.stream = stream;
+        }
+
         public string GetHost()
         {
             return host;
@@ -164,7 +169,7 @@ namespace Ceptic.Common
             return Encoding.UTF8.GetBytes($"{command}\r\n{endpoint}\r\n{JsonConvert.SerializeObject(headers)}");
         }
 
-        public static CepticRequest FromData(String data)
+        public static CepticRequest FromData(string data)
         {
             string[] values = data.Split("\r\n");
             string command = values[0];

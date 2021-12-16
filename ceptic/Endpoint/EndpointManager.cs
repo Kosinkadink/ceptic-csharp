@@ -17,9 +17,12 @@ namespace Ceptic.Endpoint
             serverSettings = settings;
         }
 
-        public void AddCommand(string command)
+        public void AddCommand(string command, CommandSettings settings=null)
         {
-            commandMap.TryAdd(command, new CommandEntry(command, serverSettings));
+            if (settings != null)
+                commandMap.TryAdd(command, new CommandEntry(command, settings));
+            else
+                commandMap.TryAdd(command, new CommandEntry(command, serverSettings));
         }
 
         public CommandEntry GetCommand(string command)

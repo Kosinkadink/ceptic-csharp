@@ -17,23 +17,16 @@ namespace Ceptic.Common
         public static readonly CepticStatusCode CONFLICT = new CepticStatusCode(409);
         public static readonly CepticStatusCode INTERNAL_SERVER_ERROR = new CepticStatusCode(500);
 
-        private readonly int valueInt;
-        private readonly string valueString;
+        private readonly int value;
 
-        CepticStatusCode(int valueInt)
+        CepticStatusCode(int value)
         {
-            this.valueInt = valueInt;
-            valueString = string.Format("D3", valueInt);
+            this.value = value;
         }
 
         public int GetValueInt()
         {
-            return valueInt;
-        }
-
-        public string GetValueString()
-        {
-            return valueString;
+            return value;
         }
 
         /// <summary>
@@ -73,33 +66,33 @@ namespace Ceptic.Common
             {
                 return false;
             }
-            return valueInt == ((CepticStatusCode)obj).valueInt;
+            return value == ((CepticStatusCode)obj).value;
         }
 
         // override object.GetHashCode
         public override int GetHashCode()
         {
-            return valueInt.GetHashCode();
+            return value.GetHashCode();
         }
 
         public bool IsSuccess()
         {
-            return 200 <= valueInt && valueInt <= 399;
+            return 200 <= value && value <= 399;
         }
 
         public bool IsError()
         {
-            return 400 <= valueInt && valueInt <= 599;
+            return 400 <= value && value <= 599;
         }
 
         public bool IsClientError()
         {
-            return 400 <= valueInt && valueInt <= 499;
+            return 400 <= value && value <= 499;
         }
 
         public bool IsServerError()
         {
-            return 500 <= valueInt && valueInt <= 599;
+            return 500 <= value && value <= 599;
         }
 
     }

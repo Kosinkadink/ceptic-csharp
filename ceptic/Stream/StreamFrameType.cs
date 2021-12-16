@@ -49,5 +49,10 @@ namespace Ceptic.Stream
                 return null;
             }
         }
+
+        public override string ToString()
+        {
+            return character.ToString();
+        }
     }
 }

@@ -124,14 +124,14 @@ namespace Ceptic.Stream
                             }
                             // if sent close frame, close handler
                             if (frame.IsClose())
-                                handler.Stop();
+                                RemoveHandler(handler);
                         }
                     }
                 }
             }
             catch (Exception e) when (e is OperationCanceledException || e is ObjectDisposedException)
             {
-            
+                // ignore
             }
             catch (Exception e)
             {
@@ -175,7 +175,7 @@ namespace Ceptic.Stream
                         }
                         catch (StreamHandlerStoppedException)
                         {
-
+                            continue;
                         }
                     }
                     // if close all, stop manager
@@ -200,6 +200,13 @@ namespace Ceptic.Stream
                             RemoveHandler(handler);
                             continue;
                         }
+                        try
+                        {
+                            handler.AddToRead(frame);
+                        } catch (StreamHandlerStoppedException)
+                        {
+                            continue;
+                        }
                         // create task to run removable.HandleNewConnection to continue comms with handler
                         new Task(() => removable.HandleNewConnection(handler), cancellationToken, TaskCreationOptions.LongRunning).Start();
                     }
@@ -220,7 +227,7 @@ namespace Ceptic.Stream
             }
             catch (Exception e) when (e is OperationCanceledException || e is ObjectDisposedException)
             {
-
+                // ignore
             }
             catch (Exception e)
             {
@@ -283,17 +290,15 @@ namespace Ceptic.Stream
             var removed = streams.TryRemove(streamId, out handler);
             if (removed)
             {
-                handler?.Stop();
                 handler?.Dispose();
             }
         }
 
-        private void RemoveHandler(StreamHandler handler)
+        public void RemoveHandler(StreamHandler handler)
         {
             RemoveHandler(handler.GetStreamId());
             try
             {
-                handler?.Stop();
                 handler?.Dispose();
             }
             catch (ObjectDisposedException) { }

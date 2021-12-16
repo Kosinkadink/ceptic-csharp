@@ -12,7 +12,7 @@ using System.Text;
 
 namespace Ceptic.Client
 {
-    class CepticClient : IRemovableManagers
+    public class CepticClient : IRemovableManagers
     {
         private readonly ClientSettings settings;
         private readonly string certFile;
@@ -26,10 +26,7 @@ namespace Ceptic.Client
 
         public CepticClient(ClientSettings settings=null, string certFile=null, string keyFile = null, string caFile=null, bool checkHostname=true, bool secure=true)
         {
-            if (settings == null)
-                this.settings = new ClientSettings();
-            else
-                this.settings = settings;
+            this.settings = settings ?? new ClientSettings();
             this.certFile = certFile;
             this.keyFile = keyFile;
             this.caFile = caFile;
@@ -80,7 +77,7 @@ namespace Ceptic.Client
             return Connect(request, SpreadType.Standalone);
         }
 
-        protected CepticResponse Connect(CepticRequest request, SpreadType spread)
+        private CepticResponse Connect(CepticRequest request, SpreadType spread)
         {
             // verify and prepare request
             request.VerifyAndPrepare();
@@ -157,6 +154,11 @@ namespace Ceptic.Client
                 throw e;
             }
         }
+
+        public void HandleNewConnection(StreamHandler stream)
+        {
+            throw new NotImplementedException();
+        }
         #endregion
 
         #region Stop
@@ -167,7 +169,7 @@ namespace Ceptic.Client
         #endregion
 
         #region Managers
-        protected StreamManager CreateNewManager(CepticRequest request, string destination)
+        private StreamManager CreateNewManager(CepticRequest request, string destination)
         {
             try
             {
@@ -181,7 +183,7 @@ namespace Ceptic.Client
                     ReceiveTimeout = 5000,
                     SendTimeout = 5000
                 };
-                // connect the socket to teh remove endpoint
+                // connect the socket to the remove endpoint
                 try
                 {
                     rawSocket.Connect(endpoint);
@@ -272,7 +274,7 @@ namespace Ceptic.Client
             }
         }
 
-        protected void AddManager(StreamManager manager)
+        private void AddManager(StreamManager manager)
         {
             destinationMap.TryGetValue(manager.GetDestination(), out var managerSet);
             // if manager set already exists for this destination, add manager to that set
@@ -289,13 +291,13 @@ namespace Ceptic.Client
             managers.TryAdd(manager.GetManagerId(), manager);
         }
 
-        protected StreamManager GetManager(Guid managerId)
+        private StreamManager GetManager(Guid managerId)
         {
             managers.TryGetValue(managerId, out var manager);
             return manager;
         }
 
-        protected StreamManager GetAvailableManagerForDestination(string destination)
+        private StreamManager GetAvailableManagerForDestination(string destination)
         {
             destinationMap.TryGetValue(destination, out var managerSet);
             // if manager set exists, try to get first manager that isn't saturated with handlers
@@ -339,10 +341,5 @@ namespace Ceptic.Client
             return manager;
         }
         #endregion
-
-        public void HandleNewConnection(StreamHandler stream)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

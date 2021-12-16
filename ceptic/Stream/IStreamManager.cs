@@ -4,13 +4,14 @@ using System.Text;
 
 namespace Ceptic.Stream
 {
-    interface IStreamManager : IDisposable
+    public interface IStreamManager : IDisposable
     {
         Guid GetManagerId();
         string GetDestination();
         bool IsHandlerLimitReached();
         StreamHandler CreateHandler();
         StreamHandler CreateHandler(Guid streamId);
+        void RemoveHandler(StreamHandler handler);
         void Stop();
         void Stop(string reason);
         bool IsFullyStopped();

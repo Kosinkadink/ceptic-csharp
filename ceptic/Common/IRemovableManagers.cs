@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Ceptic.Common
 {
-    interface IRemovableManagers
+    public interface IRemovableManagers
     {
         IStreamManager RemoveManager(Guid managerId);
         void HandleNewConnection(StreamHandler stream);
