@@ -266,7 +266,7 @@ namespace Ceptic.Server
             // if errors or no endpointValue found, send CepticResponse with BadRequest
             if (errors.Count > 1 || endpointValue == null)
             {
-                stream.SendResponse(new CepticResponse(CepticStatusCode.BAD_REQUEST, errors));
+                stream.SendResponse(new CepticResponse(CepticStatusCode.BAD_REQUEST, errors: errors));
                 stream.SendClose();
                 return;
             }

@@ -27,7 +27,7 @@ namespace ceptic
             var request = new CepticRequest(CommandType.GET, "localhost/exchange");
 
             var response = client.Connect(request);
-            Console.WriteLine($"Request successful!\n{response.GetStatusCode().GetValueInt()}\n{response.GetHeaders()}\n{Encoding.UTF8.GetString(response.GetBody())}");
+            Console.WriteLine($"Request successful!\n{response.GetStatusCode().GetValue()}\n{response.GetHeaders()}\n{Encoding.UTF8.GetString(response.GetBody())}");
             if (response.GetExchange())
             {
                 var stream = response.GetStream();
@@ -39,7 +39,7 @@ namespace ceptic
                     if (data.IsResponse())
                     {
                         hasReceivedResponse = true;
-                        Console.WriteLine($"Received response; end of exchange!\n{data.GetResponse().GetStatusCode().GetValueInt()}\n{data.GetResponse().GetHeaders()}\n{Encoding.UTF8.GetString(data.GetResponse().GetBody())}");
+                        Console.WriteLine($"Received response; end of exchange!\n{data.GetResponse().GetStatusCode().GetValue()}\n{data.GetResponse().GetHeaders()}\n{Encoding.UTF8.GetString(data.GetResponse().GetBody())}");
                         break;
                     }
                     var receivedData = data.GetData();
@@ -55,7 +55,7 @@ namespace ceptic
                     if (data.IsResponse())
                     {
                         hasReceivedResponse = true;
-                        Console.WriteLine($"Received response after sending exit; end of exchange!\n{data.GetResponse().GetStatusCode().GetValueInt()}\n{data.GetResponse().GetHeaders()}\n{Encoding.UTF8.GetString(data.GetResponse().GetBody())}");
+                        Console.WriteLine($"Received response after sending exit; end of exchange!\n{data.GetResponse().GetStatusCode().GetValue()}\n{data.GetResponse().GetHeaders()}\n{Encoding.UTF8.GetString(data.GetResponse().GetBody())}");
                     }
                 }
                 stream.SendClose();
@@ -72,7 +72,7 @@ namespace ceptic
             {
                 var request = new CepticRequest("get", "localhost:9000");
                 var response = client.Connect(request);
-                Console.WriteLine($"\n#{i + 1} Request successful!\n{response.GetStatusCode().GetValueInt()}\n{response.GetHeaders()}\n{Encoding.UTF8.GetString(response.GetBody())}");
+                Console.WriteLine($"\n#{i + 1} Request successful!\n{response.GetStatusCode().GetValue()}\n{response.GetHeaders()}\n{Encoding.UTF8.GetString(response.GetBody())}");
                 //Thread.Sleep(1000);
             }
 

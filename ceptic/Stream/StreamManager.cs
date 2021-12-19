@@ -165,13 +165,14 @@ namespace Ceptic.Stream
                         var handler = streams.GetValueOrDefault(frame.GetStreamId());
                         handler?.UpdateKeepAlive();
                     }
-                    // if handler is to be closed, add frame and it will take care of itself
+                    // if handler is to be closed, add frame and remove handler
                     else if (frame.IsClose())
                     {
                         var handler = streams.GetValueOrDefault(frame.GetStreamId());
                         try
                         {
                             handler?.AddToRead(frame);
+                            RemoveHandler(handler);
                         }
                         catch (StreamHandlerStoppedException)
                         {
@@ -296,6 +297,7 @@ namespace Ceptic.Stream
 
         public void RemoveHandler(StreamHandler handler)
         {
+            if (handler == null) return;
             RemoveHandler(handler.GetStreamId());
             try
             {

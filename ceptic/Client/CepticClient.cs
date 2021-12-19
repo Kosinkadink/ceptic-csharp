@@ -142,9 +142,8 @@ namespace Ceptic.Client
                     // receive body
                     response.SetBody(stream.ReadDataRaw((long)response.GetContentLength()));
                 }
-                // TODO: add check for Exchange header on request as well
                 // close stream if no Exchange header on response
-                if (!response.GetExchange())
+                if (!response.GetExchange() || !request.GetExchange())
                     stream.SendClose();
                 return response;
             }

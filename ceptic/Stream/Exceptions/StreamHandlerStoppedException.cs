@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Ceptic.Stream.Exceptions
 {
-    class StreamHandlerStoppedException : StreamException
+    public class StreamHandlerStoppedException : StreamClosedException
     {
         public StreamHandlerStoppedException()
         {

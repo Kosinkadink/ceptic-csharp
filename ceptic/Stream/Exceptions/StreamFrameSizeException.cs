@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Ceptic.Stream.Exceptions
 {
-    class StreamFrameSizeException : StreamException
+    public class StreamFrameSizeException : StreamException
     {
         public StreamFrameSizeException()
         {

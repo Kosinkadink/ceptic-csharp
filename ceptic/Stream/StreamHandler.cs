@@ -14,6 +14,7 @@ namespace Ceptic.Stream
 {
     public class StreamHandler : IDisposable
     {
+        private readonly ConcurrentQueue<StreamFrame> readBufferNonblocking;
         private readonly BlockingCollection<StreamFrame> readBuffer;
         private readonly BlockingCollection<StreamFrame> managerSendBuffer;
         private const int bufferWaitTimeout = 100;
@@ -47,7 +48,8 @@ namespace Ceptic.Stream
             this.settings = settings;
             this.managerSendBuffer = managerSendBuffer;
 
-            readBuffer = new BlockingCollection<StreamFrame>(new ConcurrentQueue<StreamFrame>());
+            readBufferNonblocking = new ConcurrentQueue<StreamFrame>();
+            readBuffer = new BlockingCollection<StreamFrame>(readBufferNonblocking);
 
             cancellationSource = new CancellationTokenSource();
 
@@ -97,7 +99,7 @@ namespace Ceptic.Stream
             //return keepAliveTimer.Elapsed.TotalSeconds > settings.streamTimeout;
         }
 
-        public void OnTimedOutEvent(Object source)
+        public void OnTimedOutEvent(object source)
         {
             isTimedOut = true;
             SendClose();
@@ -307,14 +309,21 @@ namespace Ceptic.Stream
         {
             StreamFrame frame;
             // if timeout is less than 0, then block and wait to get next frame (up to stream timeout)
-            if (timeout < 0)
-                readBuffer.TryTake(out frame, TimeSpan.FromSeconds(settings.streamTimeout));
-            // if timeout is 0, do not block and immediately return
-            else if (timeout == 0)
-                readBuffer.TryTake(out frame, 0);
-            // otherwise wait up to specified time (bounded by stream timeout)
-            else
-                readBuffer.TryTake(out frame, TimeSpan.FromSeconds(Math.Min(timeout, settings.streamTimeout)));
+            try
+            {
+                if (timeout < 0)
+                    readBuffer.TryTake(out frame, TimeSpan.FromSeconds(settings.streamTimeout));
+                // if timeout is 0, do not block and immediately return
+                else if (timeout == 0)
+                    readBuffer.TryTake(out frame, 0);
+                // otherwise wait up to specified time (bounded by stream timeout)
+                else
+                    readBuffer.TryTake(out frame, TimeSpan.FromSeconds(Math.Min(timeout, settings.streamTimeout)));
+            }
+            catch (ObjectDisposedException)
+            {
+                readBufferNonblocking.TryDequeue(out frame);
+            }
             // if frame not null
             if (frame != null)
             {
@@ -330,7 +339,7 @@ namespace Ceptic.Stream
                 return frame;
             }
             // if handler is stopped and no additional frames to rad, throw exception
-            if (IsStopped() && readBuffer.Count == 0)
+            if (IsStopped() && readBufferNonblocking.Count == 0)
                 throw new StreamHandlerStoppedException("handler is stopped and no frames in read buffer; cannot read frames through a stopped handler");
             // return null since frame will be null here
             return null;

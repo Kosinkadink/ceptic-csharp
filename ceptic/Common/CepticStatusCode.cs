@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Ceptic.Common
 {
@@ -9,12 +7,16 @@ namespace Ceptic.Common
         public static readonly CepticStatusCode OK = new CepticStatusCode(200);
         public static readonly CepticStatusCode CREATED = new CepticStatusCode(201);
         public static readonly CepticStatusCode NO_CONTENT = new CepticStatusCode(204);
+        public static readonly CepticStatusCode EXCHANGE_START = new CepticStatusCode(250);
+        public static readonly CepticStatusCode EXCHANGE_END = new CepticStatusCode(251);
         public static readonly CepticStatusCode NOT_MODIFIED = new CepticStatusCode(304);
         public static readonly CepticStatusCode BAD_REQUEST = new CepticStatusCode(400);
         public static readonly CepticStatusCode UNAUTHORIZED = new CepticStatusCode(401);
         public static readonly CepticStatusCode FORBIDDEN = new CepticStatusCode(403);
         public static readonly CepticStatusCode NOT_FOUND = new CepticStatusCode(404);
         public static readonly CepticStatusCode CONFLICT = new CepticStatusCode(409);
+        public static readonly CepticStatusCode UNEXPECTED_END = new CepticStatusCode(460);
+        public static readonly CepticStatusCode MISSING_EXCHANGE = new CepticStatusCode(461);
         public static readonly CepticStatusCode INTERNAL_SERVER_ERROR = new CepticStatusCode(500);
 
         private readonly int value;
@@ -24,7 +26,7 @@ namespace Ceptic.Common
             this.value = value;
         }
 
-        public int GetValueInt()
+        public int GetValue()
         {
             return value;
         }
@@ -57,6 +59,12 @@ namespace Ceptic.Common
                 return null;
             }
 
+        }
+
+        // override object.ToString
+        public override string ToString()
+        {
+            return value.ToString();
         }
 
         // override object.Equals

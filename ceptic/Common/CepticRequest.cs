@@ -1,5 +1,6 @@
 ﻿using Ceptic.Common.Exceptions;
 using Ceptic.Stream;
+using Ceptic.Stream.Exceptions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -21,34 +22,22 @@ namespace Ceptic.Common
         private int port = Constants.DEFAULT_PORT;
 
         #region Constructors
-        public CepticRequest(string command, string url)
+        public CepticRequest(string command, string url, byte[] body=null, JObject headers = null)
         {
             this.command = command;
             this.url = url;
-        }
-
-        public CepticRequest(string command, string url, byte[] body)
-            : this(command, url)
-        {
-            SetBody(body);
-        }
-
-        protected CepticRequest(string command, string endpoint, JObject headers)
-        {
-            this.command = command;
-            this.endpoint = endpoint;
-            if (headers != null)
-                this.headers = headers;
-        }
-
-        protected CepticRequest(string command, string endpoint, JObject headers, byte[] body, string url)
-        {
-            this.command = command;
-            this.endpoint = endpoint;
             if (headers != null)
                 this.headers = headers;
             SetBody(body);
-            this.url = url;
+        }
+
+        protected static CepticRequest CreateWithEndpoint(string command, string endpoint, JObject headers=null, byte[] body=null)
+        {
+            var request = new CepticRequest(command, null, body, headers)
+            {
+                endpoint = endpoint
+            };
+            return request;
         }
         #endregion
 
@@ -61,16 +50,6 @@ namespace Ceptic.Common
         public string GetEndpoint()
         {
             return endpoint;
-        }
-
-        public string GetUrl()
-        {
-            return url;
-        }
-
-        public void SetUrl(string url)
-        {
-            this.url = url;
         }
 
         public byte[] GetBody()
@@ -179,7 +158,7 @@ namespace Ceptic.Common
                 endpoint = values[1];
             if (values.Length > 2)
                 headers = JsonConvert.DeserializeObject<JObject>(values[2]);
-            return new CepticRequest(command, endpoint, headers);
+            return CreateWithEndpoint(command, endpoint, headers);
         }
 
         public static CepticRequest FromData(byte[] data)
@@ -190,7 +169,29 @@ namespace Ceptic.Common
 
         public StreamHandler BeginExchange()
         {
-            // TODO: fill out
+            var response = new CepticResponse(CepticStatusCode.EXCHANGE_START);
+            response.SetExchange(true);
+            if (stream != null && !stream.IsStopped())
+            {
+                try
+                {
+                    if (!GetExchange())
+                    {
+                        stream.SendResponse(new CepticResponse(CepticStatusCode.MISSING_EXCHANGE));
+                        if (stream.GetSettings().verbose)
+                            Console.WriteLine("Request did not have required Exchange header");
+                        return null;
+                    }
+                    stream.SendResponse(response);
+                }
+                catch (StreamException e)
+                {
+                    if (stream.GetSettings().verbose)
+                        Console.WriteLine($"StreamException type {e.GetType()} while trying to BeginExchange: {e.Message}");
+                    return null;
+                }
+                return stream;
+            }
             return null;
         }
 

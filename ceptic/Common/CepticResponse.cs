@@ -15,30 +15,15 @@ namespace Ceptic.Common
         private StreamHandler stream;
 
         #region Constructors
-        public CepticResponse(CepticStatusCode statusCode, byte[] body, JObject headers, JArray errors, StreamHandler stream)
+        public CepticResponse(CepticStatusCode statusCode, byte[] body=null, JObject headers=null, JArray errors=null, StreamHandler stream=null)
         {
             this.statusCode = statusCode;
-            SetBody(body);
             if (headers != null)
                 this.headers = headers;
             if (errors != null)
                 SetErrors(errors);
+            SetBody(body);
             this.stream = stream;
-        }
-
-        public CepticResponse(CepticStatusCode statusCode, JObject headers) : this(statusCode, null, headers, null, null)
-        {
-            
-        }
-
-        public CepticResponse(CepticStatusCode statusCode, JArray errors) : this(statusCode, null, null, errors, null)
-        {
-
-        }
-
-        public CepticResponse(CepticStatusCode statusCode) : this(statusCode, null, null, null, null)
-        {
-
         }
         #endregion
 
@@ -78,7 +63,7 @@ namespace Ceptic.Common
         #region Data
         public byte[] GetData()
         {
-            return Encoding.UTF8.GetBytes($"{string.Format("{0,3}", statusCode.GetValueInt())}\r\n{JsonConvert.SerializeObject(headers)}");
+            return Encoding.UTF8.GetBytes($"{string.Format("{0,3}", statusCode.GetValue())}\r\n{JsonConvert.SerializeObject(headers)}");
         }
 
         public static CepticResponse FromData(string data)
@@ -86,9 +71,9 @@ namespace Ceptic.Common
             string[] values = data.Split("\r\n");
             CepticStatusCode statusCode = CepticStatusCode.FromValue(values[0]);
             if (values.Length >= 2)
-                return new CepticResponse(statusCode, JsonConvert.DeserializeObject<JObject>(values[1]));
+                return new CepticResponse(statusCode, headers: JsonConvert.DeserializeObject<JObject>(values[1]));
             else
-                return new CepticResponse(statusCode, (JObject)null);
+                return new CepticResponse(statusCode);
         }
 
         public static CepticResponse FromData(byte[] data)

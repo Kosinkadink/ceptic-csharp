@@ -3,7 +3,7 @@ using System;
 
 namespace Ceptic.Stream.Exceptions
 {
-    class StreamException : CepticException
+    public class StreamException : CepticException
     {
         public StreamException()
         {
