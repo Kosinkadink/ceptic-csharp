@@ -2,6 +2,7 @@ using Ceptic.Client;
 using Ceptic.Common;
 using Ceptic.Endpoint;
 using Ceptic.Server;
+using Ceptic.Stream.Exceptions;
 using IntegrationTests.Helpers;
 using NUnit.Framework;
 using System;
@@ -51,6 +52,44 @@ namespace IntegrationTests
             Assert.That(response.GetStatusCode(), Is.EqualTo(CepticStatusCode.OK));
             Assert.That(response.GetBody().Length, Is.EqualTo(0));
             Assert.That(response.GetExchange(), Is.False);
+        }
+
+        [Test]
+        public void Command1000_Unsecure_Success()
+        {
+            // Arrange
+            server = CepticInitializers.CreateNonSecureServer(verbose: true);
+            client = CepticInitializers.CreateNonSecureClient();
+
+            var command = CommandType.GET;
+            var endpoint = "/";
+
+            server.AddCommand(command);
+            server.AddRoute(command, endpoint, new EndpointEntry((request, variables) => {
+                Console.WriteLine($"Received body: {Encoding.UTF8.GetString(request.GetBody())}");
+                return new CepticResponse(CepticStatusCode.OK, request.GetBody());
+            }));
+
+            
+            // Act
+            server.Start();
+            for (int i = 0; i < 1000; i++)
+            {
+                try
+                {
+                    var request = new CepticRequest(command, $"localhost{endpoint}", body: Encoding.UTF8.GetBytes($"{i}"));
+                    var response = client.Connect(request);
+                    // Assert
+                    Assert.That(response.GetStatusCode(), Is.EqualTo(CepticStatusCode.OK));
+                    //Assert.That(response.GetBody().Length, Is.EqualTo(0));
+                    Assert.That(response.GetExchange(), Is.False);
+                }
+                catch (StreamException e)
+                {
+                    Console.WriteLine($"Error thrown on iteration: {i},{e.GetType()},{e.Message}");
+                    throw e;
+                }
+            }
         }
 
         [Test]

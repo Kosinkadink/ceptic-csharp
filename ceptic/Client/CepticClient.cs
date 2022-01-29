@@ -6,9 +6,7 @@ using Ceptic.Stream.Exceptions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Net;
 using System.Net.Sockets;
-using System.Text;
 
 namespace Ceptic.Client
 {
@@ -172,24 +170,18 @@ namespace Ceptic.Client
         {
             try
             {
-                IPHostEntry host = Dns.GetHostEntry(request.GetHost());
-                IPAddress ipAddress = host.AddressList[1];
-                IPEndPoint endpoint = new IPEndPoint(ipAddress, request.GetPort());
+                // create tcp client and connect
+                var tcpClient = new TcpClient(request.GetHost(), request.GetPort());
+                tcpClient.SendTimeout = 5000;
+                tcpClient.ReceiveTimeout = 5000;
 
-                // create socket
-                Socket rawSocket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
-                {
-                    ReceiveTimeout = 5000,
-                    SendTimeout = 5000
-                };
                 // connect the socket to the remove endpoint
                 try
                 {
-                    rawSocket.Connect(endpoint);
                     // TODO: set up ssl stream
                     
                     // wrap as SocketCeptic
-                    var socket = new SocketCeptic(rawSocket);
+                    var socket = new SocketCeptic(tcpClient.GetStream(), tcpClient);
                     // send version
                     socket.SendRaw(string.Format("{0,16}", settings.version));
                     // send frameMinSize
@@ -305,7 +297,7 @@ namespace Ceptic.Client
                 foreach(var managerId in managerSet)
                 {
                     var manager = GetManager(managerId);
-                    if (manager != null && !manager.IsHandlerLimitReached())
+                    if (manager != null && !manager.IsStopped() && !manager.IsHandlerLimitReached())
                         return manager;
                 }
             }

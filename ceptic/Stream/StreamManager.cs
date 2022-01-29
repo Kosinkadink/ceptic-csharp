@@ -6,7 +6,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,7 +20,7 @@ namespace Ceptic.Stream
         private readonly IRemovableManagers removable;
         private readonly bool isServer;
 
-        private readonly Stopwatch existenceTimer = new Stopwatch();
+        private readonly Stopwatch existenceStopwatch = new Stopwatch();
         private Timer keepAliveTimer;
 
         private readonly CancellationTokenSource cancellationSource;
@@ -32,7 +31,6 @@ namespace Ceptic.Stream
 
         private bool isTimedOut = false;
         private bool shouldStop = false;
-        private bool fullyStopped = false;
         private string stopReason = "";
         private bool alreadyRemoved = false;
 
@@ -68,11 +66,11 @@ namespace Ceptic.Stream
         {
             StartTimers();
 
-            new Task(() => SendMonitor(), cancellationToken, TaskCreationOptions.LongRunning).Start();
-            new Task(() => ReceiveMonitor(), cancellationToken, TaskCreationOptions.LongRunning).Start();
+            new Task(() => ProcessSentFrames(), cancellationToken, TaskCreationOptions.LongRunning).Start();
+            new Task(() => ProcessReceivedFrames(), cancellationToken, TaskCreationOptions.LongRunning).Start();
         }
 
-        private void SendMonitor()
+        private void ProcessSentFrames()
         {
             try
             {
@@ -131,16 +129,15 @@ namespace Ceptic.Stream
             }
             catch (Exception e) when (e is OperationCanceledException || e is ObjectDisposedException)
             {
-                // ignore
+                Stop($"[ProcessSentFrames] Cancelled or disposed: {e}");
             }
             catch (Exception e)
             {
-                Stop($"[SendMonitor] Unexpected exception: {e}");
-                throw e;
+                Stop($"[ProcessSentFrames] Unexpected exception: {e}");
             }
         }
 
-        private void ReceiveMonitor()
+        private void ProcessReceivedFrames()
         {
             try
             {
@@ -228,12 +225,11 @@ namespace Ceptic.Stream
             }
             catch (Exception e) when (e is OperationCanceledException || e is ObjectDisposedException)
             {
-                // ignore
+                Stop($"[ProcessReceivedFrames] Cancelled or disposed: {e}");
             }
             catch (Exception e)
             {
-                Stop($"[ReadMonitor] Unexpected exception: {e}");
-                throw e;
+                Stop($"[ProcessReceivedFrames] Unexpected exception: {e}");
             }
         }
 
@@ -241,16 +237,23 @@ namespace Ceptic.Stream
         #region Timers
         private void StartTimers()
         {
-            if (!existenceTimer.IsRunning)
+            if (!existenceStopwatch.IsRunning)
             {
-                existenceTimer.Start();
+                existenceStopwatch.Start();
                 keepAliveTimer = new Timer(OnTimedOutEvent, null, TimeSpan.FromSeconds(settings.streamTimeout), Timeout.InfiniteTimeSpan);
             }
         }
 
         public void UpdateKeepAlive()
         {
-            keepAliveTimer.Change(TimeSpan.FromSeconds(settings.streamTimeout), Timeout.InfiniteTimeSpan);
+            try
+            {
+                keepAliveTimer.Change(TimeSpan.FromSeconds(settings.streamTimeout), Timeout.InfiniteTimeSpan);
+            }
+            catch (ObjectDisposedException)
+            {
+                // do nothing
+            }
         }
 
         public bool IsTimedOut()
@@ -350,14 +353,14 @@ namespace Ceptic.Stream
             }
         }
 
-        public bool IsFullyStopped()
-        {
-            return fullyStopped;
-        }
-
         public string GetStopReason()
         {
             return stopReason;
+        }
+
+        public bool IsStopped()
+        {
+            return shouldStop;
         }
 
         public void Dispose()

@@ -14,7 +14,7 @@ namespace Ceptic.Stream
         void RemoveHandler(StreamHandler handler);
         void Stop();
         void Stop(string reason);
-        bool IsFullyStopped();
+        bool IsStopped();
         string GetStopReason();
         bool IsTimedOut();
     }

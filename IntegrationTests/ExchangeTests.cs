@@ -81,7 +81,7 @@ namespace IntegrationTests
         }
 
         [Test]
-        public void Exchange_Echo100_Unsecure_Success()
+        public void Exchange_Echo1000_Unsecure_Success()
         {
             // Arrange
             server = CepticInitializers.CreateNonSecureServer(verbose: true);
@@ -129,8 +129,8 @@ namespace IntegrationTests
             Assert.That(response.GetStream().IsStopped(), Is.False);
 
             var stream = response.GetStream();
-            
-            for (int i=0; i < 100; i++)
+
+            for (int i=0; i < 1000; i++)
             {
                 var expectedData = Encoding.UTF8.GetBytes($"echo{i}");
                 stream.SendData(expectedData);

@@ -14,9 +14,9 @@ namespace ceptic
         {
             Console.WriteLine("Hello World!");
 
-            DoServer();
+            //DoServer();
             //DoClient();
-            //DoClientExchange();
+            DoClientExchange();
         }
 
         static void DoClientExchange()
@@ -25,6 +25,7 @@ namespace ceptic
             var client = new CepticClient(clientSettings);
 
             var request = new CepticRequest(CommandType.GET, "localhost/exchange");
+            request.SetExchange(true);
 
             var response = client.Connect(request);
             Console.WriteLine($"Request successful!\n{response.GetStatusCode().GetValue()}\n{response.GetHeaders()}\n{Encoding.UTF8.GetString(response.GetBody())}");
@@ -32,7 +33,7 @@ namespace ceptic
             {
                 var stream = response.GetStream();
                 var hasReceivedResponse = false;
-                for (int i = 0; i < 1000; i++) {
+                for (int i = 0; i < 10000; i++) {
                     var stringData = $"echo{i}";
                     stream.SendData(Encoding.UTF8.GetBytes(stringData));
                     var data = stream.ReadData(100);

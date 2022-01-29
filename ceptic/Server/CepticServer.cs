@@ -32,7 +32,7 @@ namespace Ceptic.Server
 
         private Thread runThread;
 
-        private Socket serverSocket;
+        private TcpListener serverListener;
 
         private bool shouldStop = false;
         private bool stopped = false;
@@ -106,20 +106,12 @@ namespace Ceptic.Server
         {
             if (settings.verbose)
                 Console.WriteLine($"ceptic server started - version {settings.version} on port {settings.port} (secure: {secure})");
-            // create server socket
-            var host = Dns.GetHostEntry("localhost");
-            var ipAddress = host.AddressList[1];
-            var endpoint = new IPEndPoint(ipAddress, settings.port);
 
             try
             {
-                serverSocket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
-                {
-                    ReceiveTimeout = 5000,
-                    SendTimeout = 5000
-                };
-                serverSocket.Bind(endpoint);
-                serverSocket.Listen(settings.requestQueueSize);
+                // create tcp listener
+                serverListener = new TcpListener(IPAddress.Any, settings.port);
+                serverListener.Start(settings.requestQueueSize);
             }
             catch (SocketException e)
             {
@@ -131,10 +123,10 @@ namespace Ceptic.Server
 
             while (!shouldStop)
             {
-                Socket socket;
+                TcpClient client;
                 try
                 {
-                    socket = serverSocket.Accept();
+                    client = serverListener.AcceptTcpClient();
                 }
                 catch (SocketException)
                 {
@@ -147,24 +139,13 @@ namespace Ceptic.Server
                     Stop();
                     continue;
                 }
-                // set socket timeout
-                try
-                {
-                    socket.ReceiveTimeout = 5000;
-                    socket.SendTimeout = 5000;
-                }
-                catch (SocketException e)
-                {
-                    if (settings.verbose)
-                        Console.WriteLine($"Issue setting timeout of accepted socket: {e}");
-                    Stop();
-                    continue;
-                }
+                client.ReceiveTimeout = 5000;
+                client.SendTimeout = 5000;
                 // handle accepted socket
                 new Task(() => {
                     try
                     {
-                        CreateNewManager(socket);
+                        CreateNewManager(client);
                     }
                     catch (SocketCepticException e)
                     {
@@ -178,7 +159,7 @@ namespace Ceptic.Server
             // close socket
             try
             {
-                serverSocket.Close();
+                serverListener.Stop();
             }
             catch (Exception e)
             {
@@ -203,7 +184,7 @@ namespace Ceptic.Server
             catch (ObjectDisposedException) { }
             try
             {
-                serverSocket?.Close();
+                serverListener?.Stop();
             }
             catch (Exception) { }
         }
@@ -322,13 +303,13 @@ namespace Ceptic.Server
         #endregion
 
         #region Managers
-        private void CreateNewManager(Socket rawSocket)
+        private void CreateNewManager(TcpClient client)
         {
             if (settings.verbose)
-                Console.WriteLine($"Got a connection from {rawSocket.RemoteEndPoint}");
+                Console.WriteLine($"Got a connection from {client.Client.RemoteEndPoint}");
             // TODO: wrap with SSL
             // wrap as SocketCeptic
-            var socket = new SocketCeptic(rawSocket);
+            var socket = new SocketCeptic(client.GetStream(), client);
 
             // get client version
             var clientVersion = socket.RecvRawString(16).Trim();

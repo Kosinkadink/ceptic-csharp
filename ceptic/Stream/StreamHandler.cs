@@ -29,7 +29,7 @@ namespace Ceptic.Stream
 
         private readonly StreamSettings settings;
 
-        private readonly Stopwatch existenceTimer = new Stopwatch();
+        private readonly Stopwatch existenceStopwatch = new Stopwatch();
         private Timer keepAliveTimer;
 
         private readonly CancellationTokenSource cancellationSource;
@@ -81,16 +81,23 @@ namespace Ceptic.Stream
         #region Timers
         private void StartTimers()
         {
-            if (!existenceTimer.IsRunning)
+            if (!existenceStopwatch.IsRunning)
             {
-                existenceTimer.Start();
+                existenceStopwatch.Start();
                 keepAliveTimer = new Timer(OnTimedOutEvent, null, TimeSpan.FromSeconds(settings.streamTimeout), Timeout.InfiniteTimeSpan);
             }
         }
 
         public void UpdateKeepAlive()
         {
-            keepAliveTimer.Change(TimeSpan.FromSeconds(settings.streamTimeout), Timeout.InfiniteTimeSpan);
+            try
+            {
+                keepAliveTimer.Change(TimeSpan.FromSeconds(settings.streamTimeout), Timeout.InfiniteTimeSpan);
+            }
+            catch (ObjectDisposedException)
+            {
+                // do nothing
+            }
         }
 
         public bool IsTimedOut()
@@ -436,7 +443,7 @@ namespace Ceptic.Stream
         {
             Stop();
             keepAliveTimer.Dispose();
-            readBuffer.Dispose();
+            //readBuffer.Dispose();
             cancellationSource.Dispose();
         }
         ~StreamHandler()

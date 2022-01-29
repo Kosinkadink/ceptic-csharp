@@ -1,20 +1,17 @@
 ﻿using Ceptic.Net.Exceptions;
 using System;
-using System.IO;
 using System.Net.Sockets;
 using System.Text;
 
 namespace Ceptic.Net
 {
-    public class SocketCeptic
+    public class OldSocketCeptic
     {
-        private readonly NetworkStream s;
-        private readonly TcpClient c;
+        private readonly Socket s;
 
-        public SocketCeptic(NetworkStream stream, TcpClient client)
+        public OldSocketCeptic(Socket socket)
         {
-            s = stream;
-            c = client;
+            s = socket;
         }
 
         #region Send
@@ -22,11 +19,16 @@ namespace Ceptic.Net
         {
             try
             {
-                s.Write(msg, 0, msg.Length);
+                var totalCount = 0;
+                // repeat until all bytes sent
+                while (totalCount < msg.Length)
+                {
+                    var sent = s.Send(msg, totalCount, msg.Length-totalCount, SocketFlags.None);
+                    totalCount += sent;
+                }
             }
-            catch (IOException e)
+            catch (SocketException e)
             {
-                Close();
                 throw new SocketCepticException(e.Message);
             }
         }
@@ -60,7 +62,7 @@ namespace Ceptic.Net
                 // repeat until all bytes received
                 while (totalCount < bytes)
                 {
-                    charCount = s.Read(byteBuffer, totalCount, bytes-totalCount);
+                    charCount = s.Receive(byteBuffer, totalCount, bytes-totalCount, SocketFlags.None);
                     totalCount += charCount;
                     // if nothing received, done receiving regardless of expectation
                     if (charCount == 0)
@@ -68,9 +70,8 @@ namespace Ceptic.Net
                 }
                 return byteBuffer;
             }
-            catch (IOException e)
+            catch (SocketException e)
             {
-                Close();
                 throw new SocketCepticException(e.Message);
             }
         }
@@ -106,20 +107,15 @@ namespace Ceptic.Net
         }
         #endregion
 
-        public NetworkStream GetStream()
+        public Socket GetSocket()
         {
             return s;
         }
 
-        public TcpClient GetClient()
-        {
-            return c;
-        }
-
         public void Close()
         {
+            // TODO: maybe add s.Shutdown?
             s.Close();
-            c.Close();
         }
 
     }
