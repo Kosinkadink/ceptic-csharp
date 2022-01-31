@@ -8,13 +8,13 @@ namespace IntegrationTests.Helpers
 {
     public class CepticInitializers
     {
-        public static CepticServer CreateNonSecureServer(ServerSettings settings = null, bool? verbose = null)
+        public static CepticServer CreateUnsecureServer(ServerSettings settings = null, bool? verbose = null)
         {
             settings ??= new ServerSettings(verbose: verbose == true);
             return new CepticServer(settings, secure: false);
         }
 
-        public static CepticClient CreateNonSecureClient(ClientSettings settings = null)
+        public static CepticClient CreateUnsecureClient(ClientSettings settings = null)
         {
             settings ??= new ClientSettings();
             return new CepticClient(settings, secure: false);

@@ -35,8 +35,8 @@ namespace IntegrationTests
         public void Exchange_Unsecure_Success()
         {
             // Arrange
-            server = CepticInitializers.CreateNonSecureServer(verbose: true);
-            client = CepticInitializers.CreateNonSecureClient();
+            server = CepticInitializers.CreateUnsecureServer(verbose: true);
+            client = CepticInitializers.CreateUnsecureClient();
 
             var command = CommandType.GET;
             var endpoint = "/";
@@ -84,8 +84,8 @@ namespace IntegrationTests
         public void Exchange_Echo1000_Unsecure_Success()
         {
             // Arrange
-            server = CepticInitializers.CreateNonSecureServer(verbose: true);
-            client = CepticInitializers.CreateNonSecureClient();
+            server = CepticInitializers.CreateUnsecureServer(verbose: true);
+            client = CepticInitializers.CreateUnsecureClient();
 
             var command = CommandType.GET;
             var endpoint = "/";
@@ -152,8 +152,8 @@ namespace IntegrationTests
         public void Exchange_NoExchangeHeader_Unsecure_MissingExchange()
         {
             // Arrange
-            server = CepticInitializers.CreateNonSecureServer(verbose: true);
-            client = CepticInitializers.CreateNonSecureClient();
+            server = CepticInitializers.CreateUnsecureServer(verbose: true);
+            client = CepticInitializers.CreateUnsecureClient();
 
             var command = CommandType.GET;
             var endpoint = "/";

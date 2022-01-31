@@ -3,6 +3,7 @@ using Ceptic.Common;
 using Ceptic.Endpoint;
 using Ceptic.Server;
 using System;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 
@@ -15,8 +16,8 @@ namespace ceptic
             Console.WriteLine("Hello World!");
 
             //DoServer();
-            //DoClient();
-            DoClientExchange();
+            DoClient();
+            //DoClientExchange();
         }
 
         static void DoClientExchange()
@@ -67,16 +68,22 @@ namespace ceptic
         static void DoClient()
         {
             var clientSettings = new ClientSettings();
-            var client = new CepticClient(clientSettings);
+            var client = new CepticClient(clientSettings, secure:false);
 
-            for (int i = 0; i < 1000; i++)
+            var connectStopwatch = new Stopwatch();
+            var sw = new Stopwatch();
+            sw.Start();
+            for (int i = 0; i < 10000; i++)
             {
                 var request = new CepticRequest("get", "localhost:9000");
+                connectStopwatch.Restart();
                 var response = client.Connect(request);
-                Console.WriteLine($"\n#{i + 1} Request successful!\n{response.GetStatusCode().GetValue()}\n{response.GetHeaders()}\n{Encoding.UTF8.GetString(response.GetBody())}");
+                connectStopwatch.Stop();
+                Console.WriteLine($"\n#{i + 1} Request successful in {connectStopwatch.ElapsedMilliseconds} ms!\n{response.GetStatusCode().GetValue()}\n{response.GetHeaders()}\n{Encoding.UTF8.GetString(response.GetBody())}");
                 //Thread.Sleep(1000);
             }
-
+            sw.Stop();
+            Console.WriteLine($"Total elapsed: {sw.ElapsedMilliseconds} ms");
             client.Stop();
         }
         static void DoServer()

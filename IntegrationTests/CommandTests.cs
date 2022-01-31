@@ -6,6 +6,7 @@ using Ceptic.Stream.Exceptions;
 using IntegrationTests.Helpers;
 using NUnit.Framework;
 using System;
+using System.Diagnostics;
 using System.Text;
 
 namespace IntegrationTests
@@ -35,8 +36,8 @@ namespace IntegrationTests
         public void Command_Unsecure_Success()
         {
             // Arrange
-            server = CepticInitializers.CreateNonSecureServer(verbose: true);
-            client = CepticInitializers.CreateNonSecureClient();
+            server = CepticInitializers.CreateUnsecureServer(verbose: true);
+            client = CepticInitializers.CreateUnsecureClient();
 
             var command = CommandType.GET;
             var endpoint = "/";
@@ -55,11 +56,11 @@ namespace IntegrationTests
         }
 
         [Test]
-        public void Command1000_Unsecure_Success()
+        public void Command_Unsecure_1000_Success()
         {
             // Arrange
-            server = CepticInitializers.CreateNonSecureServer(verbose: true);
-            client = CepticInitializers.CreateNonSecureClient();
+            server = CepticInitializers.CreateUnsecureServer(verbose: true);
+            client = CepticInitializers.CreateUnsecureClient();
 
             var command = CommandType.GET;
             var endpoint = "/";
@@ -73,12 +74,18 @@ namespace IntegrationTests
             
             // Act
             server.Start();
+            var connectTimer = new Stopwatch();
+            var timer = new Stopwatch();
+            timer.Start();
             for (int i = 0; i < 1000; i++)
             {
                 try
                 {
                     var request = new CepticRequest(command, $"localhost{endpoint}", body: Encoding.UTF8.GetBytes($"{i}"));
+                    connectTimer.Restart();
                     var response = client.Connect(request);
+                    connectTimer.Stop();
+                    Console.WriteLine($"Connection took {connectTimer.ElapsedMilliseconds} ms");
                     // Assert
                     Assert.That(response.GetStatusCode(), Is.EqualTo(CepticStatusCode.OK));
                     //Assert.That(response.GetBody().Length, Is.EqualTo(0));
@@ -90,14 +97,16 @@ namespace IntegrationTests
                     throw e;
                 }
             }
+            timer.Stop();
+            Console.WriteLine($"Total ms elapsed: {timer.ElapsedMilliseconds}");
         }
 
         [Test]
-        public void Command_EchoBody_Unsecure_Success()
+        public void Command_Unsecure_EchoBody_Success()
         {
             // Arrange
-            server = CepticInitializers.CreateNonSecureServer(verbose: true);
-            client = CepticInitializers.CreateNonSecureClient();
+            server = CepticInitializers.CreateUnsecureServer(verbose: true);
+            client = CepticInitializers.CreateUnsecureClient();
 
             var command = CommandType.GET;
             var endpoint = "/";
@@ -124,11 +133,11 @@ namespace IntegrationTests
         }
 
         [Test]
-        public void Command_EchoVariables_Unsecure_Success()
+        public void Command_Unsecure_EchoVariables_Success()
         {
             // Arrange
-            server = CepticInitializers.CreateNonSecureServer(verbose: true);
-            client = CepticInitializers.CreateNonSecureClient();
+            server = CepticInitializers.CreateUnsecureServer(verbose: true);
+            client = CepticInitializers.CreateUnsecureClient();
 
             var command = CommandType.GET;
             var variableName1 = "var1";
