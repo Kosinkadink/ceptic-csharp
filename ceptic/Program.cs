@@ -11,6 +11,8 @@ namespace ceptic
 {
     class Program
     {
+        static readonly string localhostIPv4 = "127.0.0.1";
+
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
@@ -25,7 +27,7 @@ namespace ceptic
             var clientSettings = new ClientSettings();
             var client = new CepticClient(clientSettings);
 
-            var request = new CepticRequest(CommandType.GET, "localhost/exchange");
+            var request = new CepticRequest(CommandType.GET, $"{localhostIPv4}/exchange");
             request.SetExchange(true);
 
             var response = client.Connect(request);
@@ -75,7 +77,7 @@ namespace ceptic
             sw.Start();
             for (int i = 0; i < 10000; i++)
             {
-                var request = new CepticRequest("get", "localhost:9000");
+                var request = new CepticRequest("get", $"{localhostIPv4}:9000");
                 connectStopwatch.Restart();
                 var response = client.Connect(request);
                 connectStopwatch.Stop();

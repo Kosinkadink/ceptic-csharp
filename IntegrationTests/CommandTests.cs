@@ -45,7 +45,7 @@ namespace IntegrationTests
             server.AddCommand(command);
             server.AddRoute(command, endpoint, basicEndpointEntry);
 
-            var request = new CepticRequest(command, $"localhost{endpoint}");
+            var request = new CepticRequest(command, $"{CepticInitializers.localhostIPv4}{endpoint}");
             // Act
             server.Start();
             var response = client.Connect(request);
@@ -81,7 +81,7 @@ namespace IntegrationTests
             {
                 try
                 {
-                    var request = new CepticRequest(command, $"localhost{endpoint}", body: Encoding.UTF8.GetBytes($"{i}"));
+                    var request = new CepticRequest(command, $"{CepticInitializers.localhostIPv4}{endpoint}", body: Encoding.UTF8.GetBytes($"{i}"));
                     connectTimer.Restart();
                     var response = client.Connect(request);
                     connectTimer.Stop();
@@ -119,7 +119,7 @@ namespace IntegrationTests
                 return new CepticResponse(CepticStatusCode.OK, body: request.GetBody());
             }));
             
-            var request = new CepticRequest(command, $"localhost{endpoint}", body: expectedBody);
+            var request = new CepticRequest(command, $"{CepticInitializers.localhostIPv4}{endpoint}", body: expectedBody);
             // Act
             server.Start();
             var response = client.Connect(request);
@@ -158,7 +158,7 @@ namespace IntegrationTests
                 return new CepticResponse(CepticStatusCode.OK, body: Encoding.UTF8.GetBytes(stringResult));
             }));
 
-            var request = new CepticRequest(command, $"localhost/{endpoint}", body: expectedBody);
+            var request = new CepticRequest(command, $"{CepticInitializers.localhostIPv4}/{endpoint}", body: expectedBody);
             // Act
             server.Start();
             var response = client.Connect(request);
@@ -171,8 +171,62 @@ namespace IntegrationTests
             Assert.That(response.GetContentLength(), Is.EqualTo(expectedBody.Length));
         }
 
+        /*[Test]
+        public void RawSocketTest()
+        {
+            bool keepRunning = true;
 
-        #region Private Methods
-        #endregion
+            var runThread = new Thread(new ThreadStart(() =>
+            {
+                var serverListener = new TcpListener(IPAddress.Any, 9000);
+                serverListener.Start();
+
+                while (keepRunning)
+                {
+                    var client = serverListener.AcceptTcpClient();
+                    var socket = new SocketCeptic(client.GetStream(), client);
+                    var message = socket.RecvRawString(10);
+                    Console.WriteLine($"Server received {message.Length} bytes: {message}");
+                    socket.SendRaw(message);
+                    socket.Close();
+                }
+                serverListener.Stop();
+                Console.WriteLine("Server stopped");
+            }));
+            runThread.Start();
+
+            var timer = new Stopwatch();
+            for (var i = 0; i < 1; i++)
+            {
+                timer.Restart();
+                IPHostEntry host = Dns.GetHostEntry("localhost");
+                IPAddress ipAddress = host.AddressList[1];
+                IPEndPoint endpoint = new IPEndPoint(ipAddress, 9000);
+
+                var client = new TcpClient();
+                client.Connect("127.0.0.1", 9000);
+                var socket = new SocketCeptic(client.GetStream(), client);
+
+                Socket rawSocket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
+                {
+                    ReceiveTimeout = 5000,
+                    SendTimeout = 5000
+                };
+                rawSocket.Connect(endpoint);
+                new NetworkStream(rawSocket);
+                var socket = new OldSocketCeptic(rawSocket);
+
+                var messageSent = "0123456789";
+                Console.WriteLine($"Client sending {messageSent.Length} bytes: {messageSent}");
+                socket.SendRaw(messageSent);
+                var messageRead = socket.RecvRawString(10);
+                Console.WriteLine($"Client received {messageRead.Length} bytes: {messageRead}");
+                socket.Close();
+                timer.Stop();
+                Console.WriteLine($"Took {timer.ElapsedMilliseconds} ms for exchange {i}");
+            }
+            keepRunning = false;
+        }*/
+
     }
 }

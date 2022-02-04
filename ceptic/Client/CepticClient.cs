@@ -172,6 +172,7 @@ namespace Ceptic.Client
             {
                 // create tcp client and connect
                 var tcpClient = new TcpClient(request.GetHost(), request.GetPort());
+                tcpClient.NoDelay = true;
                 tcpClient.SendTimeout = 5000;
                 tcpClient.ReceiveTimeout = 5000;
 

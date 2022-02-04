@@ -139,6 +139,7 @@ namespace Ceptic.Server
                     Stop();
                     continue;
                 }
+                client.NoDelay = true;
                 client.ReceiveTimeout = 5000;
                 client.SendTimeout = 5000;
                 // handle accepted socket

@@ -60,7 +60,7 @@ namespace IntegrationTests
                 }
             }));
 
-            var request = new CepticRequest(command, $"localhost/");
+            var request = new CepticRequest(command, $"{CepticInitializers.localhostIPv4}/");
             request.SetExchange(true);
             // Act, Assert
             server.Start();
@@ -118,7 +118,7 @@ namespace IntegrationTests
                 }
             }));
 
-            var request = new CepticRequest(command, $"localhost{endpoint}");
+            var request = new CepticRequest(command, $"{CepticInitializers.localhostIPv4}{endpoint}");
             request.SetExchange(true);
             // Act, Assert
             server.Start();
@@ -177,7 +177,7 @@ namespace IntegrationTests
                 }
             }));
 
-            var request = new CepticRequest(command, $"localhost/");
+            var request = new CepticRequest(command, $"{CepticInitializers.localhostIPv4}/");
             // Act, Assert
             server.Start();
             var response = client.Connect(request);

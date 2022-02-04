@@ -8,6 +8,8 @@ namespace IntegrationTests.Helpers
 {
     public class CepticInitializers
     {
+        public static readonly string localhostIPv4 = "127.0.0.1";
+
         public static CepticServer CreateUnsecureServer(ServerSettings settings = null, bool? verbose = null)
         {
             settings ??= new ServerSettings(verbose: verbose == true);
