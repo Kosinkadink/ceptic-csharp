@@ -11,7 +11,7 @@ using System.Text;
 
 namespace IntegrationTests
 {
-    public class Tests
+    public class Tests : CepticInitializers
     {
         private EndpointEntry basicEndpointEntry = new EndpointEntry((request, values) => new CepticResponse(CepticStatusCode.OK));
         private CepticServer server;
@@ -32,12 +32,13 @@ namespace IntegrationTests
             client = null;
         }
 
+        #region Unsecure Server + Client
         [Test]
         public void Command_Unsecure_Success()
         {
             // Arrange
-            server = CepticInitializers.CreateUnsecureServer(verbose: true);
-            client = CepticInitializers.CreateUnsecureClient();
+            server = CreateUnsecureServer(verbose: true);
+            client = CreateUnsecureClient();
 
             var command = CommandType.GET;
             var endpoint = "/";
@@ -45,7 +46,7 @@ namespace IntegrationTests
             server.AddCommand(command);
             server.AddRoute(command, endpoint, basicEndpointEntry);
 
-            var request = new CepticRequest(command, $"{CepticInitializers.localhostIPv4}{endpoint}");
+            var request = new CepticRequest(command, $"{localhostIPv4}{endpoint}");
             // Act
             server.Start();
             var response = client.Connect(request);
@@ -59,8 +60,8 @@ namespace IntegrationTests
         public void Command_Unsecure_1000_Success()
         {
             // Arrange
-            server = CepticInitializers.CreateUnsecureServer(verbose: true);
-            client = CepticInitializers.CreateUnsecureClient();
+            server = CreateUnsecureServer(verbose: true);
+            client = CreateUnsecureClient();
 
             var command = CommandType.GET;
             var endpoint = "/";
@@ -81,7 +82,7 @@ namespace IntegrationTests
             {
                 try
                 {
-                    var request = new CepticRequest(command, $"{CepticInitializers.localhostIPv4}{endpoint}", body: Encoding.UTF8.GetBytes($"{i}"));
+                    var request = new CepticRequest(command, $"{localhostIPv4}{endpoint}", body: Encoding.UTF8.GetBytes($"{i}"));
                     connectTimer.Restart();
                     var response = client.Connect(request);
                     connectTimer.Stop();
@@ -105,8 +106,8 @@ namespace IntegrationTests
         public void Command_Unsecure_EchoBody_Success()
         {
             // Arrange
-            server = CepticInitializers.CreateUnsecureServer(verbose: true);
-            client = CepticInitializers.CreateUnsecureClient();
+            server = CreateUnsecureServer(verbose: true);
+            client = CreateUnsecureClient();
 
             var command = CommandType.GET;
             var endpoint = "/";
@@ -119,7 +120,7 @@ namespace IntegrationTests
                 return new CepticResponse(CepticStatusCode.OK, body: request.GetBody());
             }));
             
-            var request = new CepticRequest(command, $"{CepticInitializers.localhostIPv4}{endpoint}", body: expectedBody);
+            var request = new CepticRequest(command, $"{localhostIPv4}{endpoint}", body: expectedBody);
             // Act
             server.Start();
             var response = client.Connect(request);
@@ -136,8 +137,8 @@ namespace IntegrationTests
         public void Command_Unsecure_EchoVariables_Success()
         {
             // Arrange
-            server = CepticInitializers.CreateUnsecureServer(verbose: true);
-            client = CepticInitializers.CreateUnsecureClient();
+            server = CreateUnsecureServer(verbose: true);
+            client = CreateUnsecureClient();
 
             var command = CommandType.GET;
             var variableName1 = "var1";
@@ -158,7 +159,7 @@ namespace IntegrationTests
                 return new CepticResponse(CepticStatusCode.OK, body: Encoding.UTF8.GetBytes(stringResult));
             }));
 
-            var request = new CepticRequest(command, $"{CepticInitializers.localhostIPv4}/{endpoint}", body: expectedBody);
+            var request = new CepticRequest(command, $"{localhostIPv4}/{endpoint}", body: expectedBody);
             // Act
             server.Start();
             var response = client.Connect(request);
@@ -170,6 +171,32 @@ namespace IntegrationTests
             Assert.That(request.GetContentLength(), Is.EqualTo(expectedBody.Length));
             Assert.That(response.GetContentLength(), Is.EqualTo(expectedBody.Length));
         }
+        #endregion
+
+        #region Secure Server + Client
+        [Test]
+        public void Command_Secure_Success()
+        {
+            // Arrange
+            server = CreateSecureServer(verbose: true);
+            client = CreateSecureClient();
+
+            var command = CommandType.GET;
+            var endpoint = "/";
+
+            server.AddCommand(command);
+            server.AddRoute(command, endpoint, basicEndpointEntry);
+
+            var request = new CepticRequest(command, $"{localhostIPv4}{endpoint}");
+            // Act
+            server.Start();
+            var response = client.Connect(request);
+            // Assert
+            Assert.That(response.GetStatusCode(), Is.EqualTo(CepticStatusCode.OK));
+            Assert.That(response.GetBody().Length, Is.EqualTo(0));
+            Assert.That(response.GetExchange(), Is.False);
+        }
+        #endregion
 
         /*[Test]
         public void RawSocketTest()

@@ -1,6 +1,7 @@
 ﻿using Ceptic.Client;
 using Ceptic.Common;
 using Ceptic.Endpoint;
+using Ceptic.Security;
 using Ceptic.Server;
 using System;
 using System.Diagnostics;
@@ -70,7 +71,7 @@ namespace ceptic
         static void DoClient()
         {
             var clientSettings = new ClientSettings();
-            var client = new CepticClient(clientSettings, secure:false);
+            var client = new CepticClient(clientSettings, new SecuritySettings(secure: false));
 
             var connectStopwatch = new Stopwatch();
             var sw = new Stopwatch();

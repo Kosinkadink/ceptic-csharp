@@ -1,36 +1,117 @@
 ﻿using Ceptic.Common;
 using Ceptic.Common.Exceptions;
 using Ceptic.Net;
+using Ceptic.Security;
+using Ceptic.Security.Exceptions;
 using Ceptic.Stream;
 using Ceptic.Stream.Exceptions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Ceptic.Client
 {
     public class CepticClient : IRemovableManagers
     {
         private readonly ClientSettings settings;
-        private readonly string certFile;
-        private readonly string keyFile;
-        private readonly string caFile;
-        private readonly bool checkHostname;
-        private readonly bool secure;
+        private readonly SecuritySettings security;
 
         private readonly ConcurrentDictionary<Guid, StreamManager> managers = new ConcurrentDictionary<Guid, StreamManager>();
         private readonly ConcurrentDictionary<string, HashSet<Guid>> destinationMap = new ConcurrentDictionary<string, HashSet<Guid>>();
 
-        public CepticClient(ClientSettings settings=null, string certFile=null, string keyFile = null, string caFile=null, bool checkHostname=true, bool secure=true)
+        protected X509Certificate2 localCert = null;
+        protected X509Certificate2Collection remoteCerts = null;
+
+
+        public CepticClient(ClientSettings settings=null, SecuritySettings security=null)
         {
             this.settings = settings ?? new ClientSettings();
-            this.certFile = certFile;
-            this.keyFile = keyFile;
-            this.caFile = caFile;
-            this.checkHostname = checkHostname;
-            this.secure = secure;
+            this.security = security ?? new SecuritySettings();
+            SetupSecurity();
         }
+
+        #region Security
+        protected void SetupSecurity()
+        {
+            if (security.Secure)
+            {
+                // if LocalCert present, attempt to load client cert and key
+                if (security.LocalCert != null)
+                {
+                    // if no LocalKey, then assume LocalCert combines both certificate and key
+                    if (security.LocalKey == null)
+                    {
+                        // try to load server certificate + key from combined file
+                        try
+                        {
+                            localCert = CertificateHelper.GenerateFromCombined(security.LocalCert);
+                        }
+                        catch (SecurityException e)
+                        {
+                            throw e;
+                        }
+                    }
+                    // otherwise, assume LocalCert contains certificate and LocalKey contains key
+                    else
+                    {
+                        // try to load server certificate + key from separate files
+                        try
+                        {
+                            localCert = CertificateHelper.GenerateFromSeparate(security.LocalCert, security.LocalKey);
+                        }
+                        catch (SecurityException e)
+                        {
+                            throw e;
+                        }
+                    }
+                }
+
+                // if RemoteCert present, attempt to load server cert
+                if (security.RemoteCert != null)
+                {
+                    try
+                    {
+                        remoteCerts = new X509Certificate2Collection(new X509Certificate2(security.RemoteCert));
+                    }
+                    catch (CryptographicException e)
+                    {
+                        throw new SecurityException($"RemoteCert could not be loaded at '{security.RemoteCert}': {e.Message}", e);
+                    }
+                }
+            }
+        }
+
+        private static bool ValidateServerCertificate(
+            object sender,
+            X509Certificate certificate,
+            X509Chain chain,
+            SslPolicyErrors sslPolicyErrors)
+        {
+            if (sslPolicyErrors == SslPolicyErrors.None)
+                return true;
+            // do not allow client to communicate with unauthenticated servers
+            return false;
+        }
+
+        private static bool ValidateServerCertificateNoHostnameValidation(
+            object sender,
+            X509Certificate certificate,
+            X509Chain chain,
+            SslPolicyErrors sslPolicyErrors)
+        {
+            // allow name mismatch and chain errors
+            if (sslPolicyErrors == SslPolicyErrors.None ||
+                sslPolicyErrors == SslPolicyErrors.RemoteCertificateNameMismatch || sslPolicyErrors == SslPolicyErrors.RemoteCertificateChainErrors ||
+                sslPolicyErrors == (SslPolicyErrors.RemoteCertificateNameMismatch | SslPolicyErrors.RemoteCertificateChainErrors))
+                return true;
+            // do not allow client to communicate with unauthenticated servers
+            return false;
+        }
+        #endregion
 
         #region Getters
         public ClientSettings GetSettings()
@@ -38,29 +119,14 @@ namespace Ceptic.Client
             return settings;
         }
 
-        public string GetCertFile()
+        public bool IsVerifyRemote()
         {
-            return certFile;
-        }
-
-        public string GetKeyFile()
-        {
-            return keyFile;
-        }
-
-        public string GetCaFile()
-        {
-            return caFile;
-        }
-
-        public bool IsCheckHostname()
-        {
-            return checkHostname;
+            return security.VerifyRemote;
         }
 
         public bool IsSecure()
         {
-            return secure;
+            return security.Secure;
         }
         #endregion
 
@@ -179,10 +245,44 @@ namespace Ceptic.Client
                 // connect the socket to the remove endpoint
                 try
                 {
-                    // TODO: set up ssl stream
+                    // set up ssl stream
+                    SocketCeptic socket;
+                    if (security.Secure)
+                    {
+                        // only check server hostname if VerifyRemote is true
+                        var validation = security.VerifyRemote ? new RemoteCertificateValidationCallback(ValidateServerCertificate) :
+                            new RemoteCertificateValidationCallback(ValidateServerCertificateNoHostnameValidation);
+                        var sslStream = new SslStream(tcpClient.GetStream(), false, validation, null);
+                        sslStream.ReadTimeout = 5000;
+                        sslStream.WriteTimeout = 5000;
+                        try
+                        {
+                            if (remoteCerts != null)
+                            {
+                                sslStream.AuthenticateAsClient(request.GetHost(), remoteCerts,
+                                    System.Security.Authentication.SslProtocols.Tls11 | System.Security.Authentication.SslProtocols.Tls12,
+                                    false);
+                            }
+                            else
+                            {
+                                sslStream.AuthenticateAsClient(request.GetHost());
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            sslStream.Close();
+                            tcpClient.Close();
+                            throw e;
+                        }
+                        // wrap as SocketCeptic
+                        socket = new SocketCeptic(sslStream, tcpClient);
+                    }
+                    else
+                    {
+                        // wrap as SocketCeptic
+                        socket = new SocketCeptic(tcpClient.GetStream(), tcpClient);
+                    }
                     
-                    // wrap as SocketCeptic
-                    var socket = new SocketCeptic(tcpClient.GetStream(), tcpClient);
                     // send version
                     socket.SendRaw(string.Format("{0,16}", settings.version));
                     // send frameMinSize

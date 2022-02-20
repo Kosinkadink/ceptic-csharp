@@ -5,6 +5,8 @@ using Ceptic.Endpoint;
 using Ceptic.Endpoint.Exceptions;
 using Ceptic.Net;
 using Ceptic.Net.Exceptions;
+using Ceptic.Security;
+using Ceptic.Security.Exceptions;
 using Ceptic.Stream;
 using Ceptic.Stream.Exceptions;
 using Newtonsoft.Json.Linq;
@@ -13,6 +15,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.Security;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,10 +27,7 @@ namespace Ceptic.Server
     public class CepticServer : IRemovableManagers
     {
         private readonly ServerSettings settings;
-        private readonly string certFile;
-        private readonly string keyFile;
-        private readonly string caFile;
-        private readonly bool secure;
+        private readonly SecuritySettings security;
 
         private readonly CancellationTokenSource cancellationSource;
         private readonly CancellationToken cancellationToken;
@@ -40,13 +42,14 @@ namespace Ceptic.Server
         protected readonly EndpointManager endpointManager;
         protected readonly ConcurrentDictionary<Guid, IStreamManager> managers = new ConcurrentDictionary<Guid, IStreamManager>();
 
-        public CepticServer(ServerSettings settings = null, string certFile = null, string keyFile = null, string caFile = null, bool secure = true)
+        protected X509Certificate2 localCert = null;
+        protected X509Certificate2 remoteCert = null;
+
+
+        public CepticServer(ServerSettings settings = null, SecuritySettings security = null)
         {
             this.settings = settings ?? new ServerSettings();
-            this.certFile = certFile;
-            this.keyFile = keyFile;
-            this.caFile = caFile;
-            this.secure = secure;
+            this.security = security ?? new SecuritySettings();
 
             runThread = new Thread(new ThreadStart(Run));
             runThread.IsBackground = settings.daemon;
@@ -55,7 +58,61 @@ namespace Ceptic.Server
             cancellationToken = cancellationSource.Token;
 
             endpointManager = new EndpointManager(this.settings);
+            SetupSecurity();
         }
+
+        #region Security
+        protected void SetupSecurity()
+        {
+            if (security.Secure)
+            {
+                // make sure LocalCert is present
+                if (security.LocalCert == null)
+                {
+                    throw new SecurityException("Required LocalCert missing.");
+                }
+                // if no LocalKey, then assume LocalCert contains both certificate and key
+                if (security.LocalKey == null)
+                {
+                    // try to load server certificate + key from combined file
+                    try
+                    {
+                        localCert = CertificateHelper.GenerateFromCombined(security.LocalCert);
+                    }
+                    catch (SecurityException e)
+                    {
+                        throw e;
+                    }
+                }
+                // otherwise, assume LocalCert contains certificate and LocalKey contains key
+                else
+                {
+                    // try to load server certificate + key from separate files
+                    try
+                    {
+                        localCert = CertificateHelper.GenerateFromSeparate(security.LocalCert, security.LocalKey);
+                    }
+                    catch (SecurityException e)
+                    {
+                        throw e;
+                    }
+                }
+
+                // if RemoteCert present, try to load client certificate
+                if (security.RemoteCert != null)
+                {
+                    try
+                    {
+                        remoteCert = new X509Certificate2(security.RemoteCert);
+                    }
+                    catch (CryptographicException e)
+                    {
+                        throw new SecurityException($"RemoteCert could not be loaded at '{security.RemoteCert}': {e.Message}", e);
+                    }
+                }
+            }
+        }
+        #endregion
 
         #region Getters
         public ServerSettings GetSettings()
@@ -63,24 +120,9 @@ namespace Ceptic.Server
             return settings;
         }
 
-        public string GetCertFile()
-        {
-            return certFile;
-        }
-
-        public string GetKeyFile()
-        {
-            return keyFile;
-        }
-
-        public string GetCaFile()
-        {
-            return caFile;
-        }
-
         public bool IsSecure()
         {
-            return secure;
+            return security.Secure;
         }
         #endregion
 
@@ -105,7 +147,7 @@ namespace Ceptic.Server
         private void Run()
         {
             if (settings.verbose)
-                Console.WriteLine($"ceptic server started - version {settings.version} on port {settings.port} (secure: {secure})");
+                Console.WriteLine($"ceptic server started - version {settings.version} on port {settings.port} (secure: {security.Secure})");
 
             try
             {
@@ -309,8 +351,32 @@ namespace Ceptic.Server
             if (settings.verbose)
                 Console.WriteLine($"Got a connection from {client.Client.RemoteEndPoint}");
             // TODO: wrap with SSL
-            // wrap as SocketCeptic
-            var socket = new SocketCeptic(client.GetStream(), client);
+            SocketCeptic socket;
+            if (security.Secure)
+            {
+                var sslStream = new SslStream(client.GetStream(), false);
+                sslStream.ReadTimeout = 5000;
+                sslStream.WriteTimeout = 5000;
+                try
+                {
+                    sslStream.AuthenticateAsServer(localCert, false,
+                        System.Security.Authentication.SslProtocols.Tls11 | System.Security.Authentication.SslProtocols.Tls12,
+                        false);
+                }
+                catch (Exception e)
+                {
+                    if (settings.verbose)
+                        Console.WriteLine($"Could not authenticate as server: {e.Message}");
+                    throw e;
+                }
+                // wrap as SocketCeptic
+                socket = new SocketCeptic(sslStream, client);
+            }
+            else
+            {
+                // wrap as SocketCeptic
+                socket = new SocketCeptic(client.GetStream(), client);
+            }
 
             // get client version
             var clientVersion = socket.RecvRawString(16).Trim();

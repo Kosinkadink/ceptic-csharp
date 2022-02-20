@@ -1,6 +1,7 @@
 ﻿using Ceptic.Net.Exceptions;
 using System;
 using System.IO;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Text;
 
@@ -8,10 +9,16 @@ namespace Ceptic.Net
 {
     public class SocketCeptic
     {
-        private readonly NetworkStream s;
+        private readonly System.IO.Stream s;
         private readonly TcpClient c;
 
         public SocketCeptic(NetworkStream stream, TcpClient client)
+        {
+            s = stream;
+            c = client;
+        }
+
+        public SocketCeptic(SslStream stream, TcpClient client)
         {
             s = stream;
             c = client;
@@ -27,7 +34,7 @@ namespace Ceptic.Net
             catch (IOException e)
             {
                 Close();
-                throw new SocketCepticException(e.Message);
+                throw new SocketCepticException(e.Message, e);
             }
         }
 
@@ -71,7 +78,7 @@ namespace Ceptic.Net
             catch (IOException e)
             {
                 Close();
-                throw new SocketCepticException(e.Message);
+                throw new SocketCepticException(e.Message, e);
             }
         }
 
@@ -89,9 +96,9 @@ namespace Ceptic.Net
             {
                 sizeToReceive = int.Parse(Encoding.UTF8.GetString(sizeBuffer));
             }
-            catch (FormatException)
+            catch (FormatException e)
             {
-                throw new SocketCepticException("size to receive was not the right format to convert to Int32");
+                throw new SocketCepticException("size to receive was not the right format to convert to Int32", e);
             }
             // expect size to receive to be either sizeToReceive or byte amount, whichever is lower 
             var amount = bytes;
@@ -106,7 +113,7 @@ namespace Ceptic.Net
         }
         #endregion
 
-        public NetworkStream GetStream()
+        public System.IO.Stream GetStream()
         {
             return s;
         }

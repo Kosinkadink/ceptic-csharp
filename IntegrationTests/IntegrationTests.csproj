@@ -7,6 +7,45 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="TestData\PEM\client.combined.cer" />
+    <None Remove="TestData\PEM\client_cert.cer" />
+    <None Remove="TestData\PEM\client_key.key" />
+    <None Remove="TestData\PEM\server.combined.cer" />
+    <None Remove="TestData\PEM\server_cert.cer" />
+    <None Remove="TestData\PEM\server_key.key" />
+    <None Remove="TestData\PFX\server.combined.pfx" />
+    <None Remove="TestData\PFX\server_cert.crt" />
+    <None Remove="TestData\PFX\server_cert.pfx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="TestData\PEM\client.combined.cer">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\PEM\client_cert.cer">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\PEM\client_key.key">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\PEM\server.combined.cer">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\PEM\server_cert.cer">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\PEM\server_key.key">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\PFX\server.combined.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\PFX\server_cert.crt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
     <PackageReference Include="NUnit" Version="3.13.1" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />

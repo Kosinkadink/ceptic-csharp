@@ -11,7 +11,7 @@ using System.Threading;
 
 namespace IntegrationTests
 {
-    public class ExchangeTests
+    public class ExchangeTests : CepticInitializers
     {
         private CepticServer server;
         private CepticClient client;
@@ -35,8 +35,8 @@ namespace IntegrationTests
         public void Exchange_Unsecure_Success()
         {
             // Arrange
-            server = CepticInitializers.CreateUnsecureServer(verbose: true);
-            client = CepticInitializers.CreateUnsecureClient();
+            server = CreateUnsecureServer(verbose: true);
+            client = CreateUnsecureClient();
 
             var command = CommandType.GET;
             var endpoint = "/";
@@ -60,7 +60,7 @@ namespace IntegrationTests
                 }
             }));
 
-            var request = new CepticRequest(command, $"{CepticInitializers.localhostIPv4}/");
+            var request = new CepticRequest(command, $"{localhostIPv4}/");
             request.SetExchange(true);
             // Act, Assert
             server.Start();
@@ -84,8 +84,8 @@ namespace IntegrationTests
         public void Exchange_Echo1000_Unsecure_Success()
         {
             // Arrange
-            server = CepticInitializers.CreateUnsecureServer(verbose: true);
-            client = CepticInitializers.CreateUnsecureClient();
+            server = CreateUnsecureServer(verbose: true);
+            client = CreateUnsecureClient();
 
             var command = CommandType.GET;
             var endpoint = "/";
@@ -118,7 +118,7 @@ namespace IntegrationTests
                 }
             }));
 
-            var request = new CepticRequest(command, $"{CepticInitializers.localhostIPv4}{endpoint}");
+            var request = new CepticRequest(command, $"{localhostIPv4}{endpoint}");
             request.SetExchange(true);
             // Act, Assert
             server.Start();
@@ -152,8 +152,8 @@ namespace IntegrationTests
         public void Exchange_NoExchangeHeader_Unsecure_MissingExchange()
         {
             // Arrange
-            server = CepticInitializers.CreateUnsecureServer(verbose: true);
-            client = CepticInitializers.CreateUnsecureClient();
+            server = CreateUnsecureServer(verbose: true);
+            client = CreateUnsecureClient();
 
             var command = CommandType.GET;
             var endpoint = "/";
@@ -177,7 +177,7 @@ namespace IntegrationTests
                 }
             }));
 
-            var request = new CepticRequest(command, $"{CepticInitializers.localhostIPv4}/");
+            var request = new CepticRequest(command, $"{localhostIPv4}/");
             // Act, Assert
             server.Start();
             var response = client.Connect(request);
