@@ -12,36 +12,71 @@ namespace Ceptic.Security
         public bool VerifyRemote { get; } = true;
         public bool Secure { get; } = true;
         
-        public SecuritySettings()
+        protected SecuritySettings()
         {
 
         }
 
-        public SecuritySettings(bool verifyRemote = true, bool secure = true)
+        protected SecuritySettings(bool verifyRemote = true, bool secure = true)
         {
             VerifyRemote = verifyRemote;
             Secure = secure;
         }
 
-        public SecuritySettings(string remoteCert, bool verifyRemote = true)
+        protected SecuritySettings(string remoteCert, bool verifyRemote = true)
         {
             RemoteCert = remoteCert;
             VerifyRemote = verifyRemote;
         }
 
-        public SecuritySettings(string localCert, string localKey, bool verifyRemote = true)
+        protected SecuritySettings(string localCert, string localKey, bool verifyRemote = true)
         {
             LocalCert = localCert;
             LocalKey = localKey;
             VerifyRemote = verifyRemote;
         }
 
-        public SecuritySettings(string localCert, string localKey, string remoteCert, bool verifyRemote = true)
+        protected SecuritySettings(string localCert, string localKey, string remoteCert, bool verifyRemote = true)
         {
             LocalCert = localCert;
             LocalKey = localKey;
             RemoteCert = remoteCert;
             VerifyRemote = verifyRemote;
+        }
+
+        public static SecuritySettings Client(bool verifyRemote = true)
+        {
+            return new SecuritySettings(verifyRemote, true);
+        }
+
+        public static SecuritySettings Client(string remoteCert, bool verifyRemote = true)
+        {
+            return new SecuritySettings(remoteCert, verifyRemote);
+        }
+
+        public static SecuritySettings Client(string localCert, string remoteCert, bool verifyRemote = true)
+        {
+            return new SecuritySettings(localCert, null, remoteCert, verifyRemote);
+        }
+
+        public static SecuritySettings Client(string localCert, string localKey, string remoteCert, bool verifyRemote = true)
+        {
+            return new SecuritySettings(localCert, localKey, remoteCert, verifyRemote);
+        }
+
+        public static SecuritySettings ClientUnsecure()
+        {
+            return new SecuritySettings(secure: false);
+        }
+
+        public static SecuritySettings Server(string localCert, string localKey = null, string remoteCert = null)
+        {
+            return new SecuritySettings(localCert, localKey, remoteCert);
+        }
+
+        public static SecuritySettings ServerUnsecure()
+        {
+            return new SecuritySettings(secure: false);
         }
 
     }

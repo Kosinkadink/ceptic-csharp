@@ -71,7 +71,7 @@ namespace ceptic
         static void DoClient()
         {
             var clientSettings = new ClientSettings();
-            var client = new CepticClient(clientSettings, new SecuritySettings(secure: false));
+            var client = new CepticClient(clientSettings, SecuritySettings.ClientUnsecure());
 
             var connectStopwatch = new Stopwatch();
             var sw = new Stopwatch();
@@ -92,7 +92,7 @@ namespace ceptic
         static void DoServer()
         {
             var serverSettings = new ServerSettings(verbose: true);
-            var server = new CepticServer(serverSettings);
+            var server = new CepticServer(serverSettings, SecuritySettings.ServerUnsecure());
 
             server.AddCommand(CommandType.GET);
             server.AddRoute(CommandType.GET, "/",

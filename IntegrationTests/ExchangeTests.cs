@@ -31,6 +31,7 @@ namespace IntegrationTests
             client = null;
         }
 
+        #region Unsecure Server + Client
         [Test]
         public void Exchange_Unsecure_Success()
         {
@@ -186,6 +187,58 @@ namespace IntegrationTests
             Assert.That(response.GetStream(), Is.Not.Null);
             Assert.That(response.GetStream().IsStopped(), Is.True);
         }
+        #endregion
+
+        #region Secure Server + Client
+        [Test]
+        public void Exchange_Secure_Success()
+        {
+            // Arrange
+            server = CreateSecureServer(verbose: true);
+            client = CreateSecureClient();
+
+            var command = CommandType.GET;
+            var endpoint = "/";
+
+            server.AddCommand(command);
+            server.AddRoute(command, endpoint, new EndpointEntry((request, values) => {
+                var stream = request.BeginExchange();
+                if (stream == null)
+                {
+                    return new CepticResponse(CepticStatusCode.UNEXPECTED_END);
+                }
+                try
+                {
+                    return new CepticResponse(CepticStatusCode.EXCHANGE_END);
+                }
+                catch (StreamException e)
+                {
+                    if (stream.GetSettings().verbose)
+                        Console.WriteLine($"StreamException in Endpoint: {e.GetType()},{e.Message}");
+                    return new CepticResponse(CepticStatusCode.UNEXPECTED_END);
+                }
+            }));
+
+            var request = new CepticRequest(command, $"{localhostIPv4}/");
+            request.SetExchange(true);
+            // Act, Assert
+            server.Start();
+            var response = client.Connect(request);
+            Assert.That(response.GetStatusCode(), Is.EqualTo(CepticStatusCode.EXCHANGE_START));
+            Assert.That(response.GetExchange(), Is.True);
+            Assert.That(response.GetStream(), Is.Not.Null);
+
+            var stream = response.GetStream();
+            var data = stream.ReadData(200);
+            Assert.That(data.IsResponse(), Is.True);
+            response = data.GetResponse();
+            Assert.That(response.GetStatusCode(), Is.EqualTo(CepticStatusCode.EXCHANGE_END));
+            // sleep a little bit to make sure close frame is received by client before checking if stream is stopped
+            Thread.Sleep(2);
+            Assert.That(stream.IsStopped(), Is.True);
+            Assert.That(() => stream.ReadData(200), Throws.InstanceOf<StreamClosedException>());
+        }
+        #endregion
 
     }
 }

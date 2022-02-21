@@ -126,7 +126,7 @@ namespace Ceptic.Security
                 {
                     throw new SecurityPEMException($"Error while attempting to load private key: {e.Message}", e);
                 }
-                catch (RegexMatchTimeoutException e)
+                catch (RegexMatchTimeoutException)
                 {
                     throw new SecurityPEMException("Regex timeout experienced while searching for private key");
                 }

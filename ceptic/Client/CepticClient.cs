@@ -26,11 +26,15 @@ namespace Ceptic.Client
         protected X509Certificate2 localCert = null;
         protected X509Certificate2Collection remoteCerts = null;
 
+        public CepticClient(SecuritySettings security) : this(null, security)
+        {
+
+        }
 
         public CepticClient(ClientSettings settings=null, SecuritySettings security=null)
         {
             this.settings = settings ?? new ClientSettings();
-            this.security = security ?? new SecuritySettings();
+            this.security = security ?? SecuritySettings.Client();
             SetupSecurity();
         }
 
@@ -259,20 +263,23 @@ namespace Ceptic.Client
                         {
                             if (remoteCerts != null)
                             {
-                                sslStream.AuthenticateAsClient(request.GetHost(), remoteCerts,
-                                    System.Security.Authentication.SslProtocols.Tls11 | System.Security.Authentication.SslProtocols.Tls12,
+                                // TODO: add at least rudamentary support for non-system cert chains
+                                sslStream.AuthenticateAsClient(request.GetHost(), null,
+                                    System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13,
                                     false);
                             }
                             else
                             {
-                                sslStream.AuthenticateAsClient(request.GetHost());
+                                sslStream.AuthenticateAsClient(request.GetHost(), null,
+                                    System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13,
+                                    false);
                             }
                         }
                         catch (Exception e)
                         {
                             sslStream.Close();
                             tcpClient.Close();
-                            throw e;
+                            throw new CepticIOException($"Could not authenticate as client: {e.Message}", e);
                         }
                         // wrap as SocketCeptic
                         socket = new SocketCeptic(sslStream, tcpClient);

@@ -13,32 +13,38 @@ namespace IntegrationTests
         [Test]
         public void Server_Secure_PEM()
         {
+            // Arrange
             var settings = new ServerSettings(verbose: true);
 
             var localCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "server_cert.cer");
             var localKey = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "server_key.key");
-            var security = new SecuritySettings(localCert, localKey);
-            var server = new CepticServer(settings, security);
+            var security = SecuritySettings.Server(localCert, localKey);
+            // Act, Assert
+            Assert.That(() => new CepticServer(settings, security), Throws.Nothing);
         }
 
         [Test]
         public void Server_Secure_PEM_Combined()
         {
+            // Arrange
             var settings = new ServerSettings(verbose: true);
 
             var localCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "server.combined.cer");
-            var security = new SecuritySettings(localCert, null);
-            var server = new CepticServer(settings, security);
+            var security = SecuritySettings.Server(localCert);
+            // Act, Assert
+            Assert.That(() => new CepticServer(settings, security), Throws.Nothing);
         }
 
         [Test]
         public void Server_Secure_PFX_Combined()
         {
+            // Arrange
             var settings = new ServerSettings(verbose: true);
 
             var localCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PFX", "server.combined.pfx");
-            var security = new SecuritySettings(localCert, null);
-            var server = new CepticServer(settings, security);
+            var security = SecuritySettings.Server(localCert);
+            // Act, Assert
+            Assert.That(() => new CepticServer(settings, security), Throws.Nothing);
         }
     }
 }

@@ -1,10 +1,10 @@
 ﻿using Ceptic.Common;
+using Ceptic.Common.Exceptions;
 using Ceptic.Encode;
 using Ceptic.Encode.Exceptions;
 using Ceptic.Endpoint;
 using Ceptic.Endpoint.Exceptions;
 using Ceptic.Net;
-using Ceptic.Net.Exceptions;
 using Ceptic.Security;
 using Ceptic.Security.Exceptions;
 using Ceptic.Stream;
@@ -46,10 +46,15 @@ namespace Ceptic.Server
         protected X509Certificate2 remoteCert = null;
 
 
-        public CepticServer(ServerSettings settings = null, SecuritySettings security = null)
+        public CepticServer(SecuritySettings security) : this(null, security)
+        {
+            
+        }
+
+        public CepticServer(ServerSettings settings, SecuritySettings security)
         {
             this.settings = settings ?? new ServerSettings();
-            this.security = security ?? new SecuritySettings();
+            this.security = security;
 
             runThread = new Thread(new ThreadStart(Run));
             runThread.IsBackground = settings.daemon;
@@ -190,10 +195,16 @@ namespace Ceptic.Server
                     {
                         CreateNewManager(client);
                     }
-                    catch (SocketCepticException e)
+                    catch (CepticException e)
                     {
                         if (settings.verbose)
                             Console.WriteLine($"Issue with CreateNewManager: {e}");
+                    }
+                    catch (Exception e)
+                    {
+                        if (settings.verbose)
+                            Console.WriteLine($"Unexpected issue with CreateNewManager: {e}");
+                        throw e;
                     }
                 },
                 cancellationToken, TaskCreationOptions.LongRunning).Start();
@@ -360,14 +371,14 @@ namespace Ceptic.Server
                 try
                 {
                     sslStream.AuthenticateAsServer(localCert, false,
-                        System.Security.Authentication.SslProtocols.Tls11 | System.Security.Authentication.SslProtocols.Tls12,
+                        System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13,
                         false);
                 }
                 catch (Exception e)
                 {
                     if (settings.verbose)
                         Console.WriteLine($"Could not authenticate as server: {e.Message}");
-                    throw e;
+                    throw new CepticIOException($"Could not authenticate as server: {e.Message}", e);
                 }
                 // wrap as SocketCeptic
                 socket = new SocketCeptic(sslStream, client);

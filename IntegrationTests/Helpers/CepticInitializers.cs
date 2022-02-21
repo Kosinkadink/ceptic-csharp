@@ -16,13 +16,13 @@ namespace IntegrationTests.Helpers
         public static CepticServer CreateUnsecureServer(ServerSettings settings = null, bool? verbose = null)
         {
             settings ??= new ServerSettings(verbose: verbose == true);
-            return new CepticServer(settings, new SecuritySettings(secure: false));
+            return new CepticServer(settings, SecuritySettings.ServerUnsecure());
         }
 
         public static CepticClient CreateUnsecureClient(ClientSettings settings = null)
         {
             settings ??= new ClientSettings();
-            return new CepticClient(settings, new SecuritySettings(secure: false));
+            return new CepticClient(settings, SecuritySettings.ClientUnsecure());
         }
 
         public static CepticServer CreateSecureServer(ServerSettings settings = null, bool? verbose = null)
@@ -31,7 +31,7 @@ namespace IntegrationTests.Helpers
             var localCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "server_cert.cer");
             var localKey = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "server_key.key");
             //var localCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PFX", "server.combined.pfx");
-            var security = new SecuritySettings(localCert, localKey);
+            var security = SecuritySettings.Server(localCert, localKey);
             return new CepticServer(settings, security);
         }
 
@@ -40,7 +40,7 @@ namespace IntegrationTests.Helpers
             settings ??= new ClientSettings();
             var remoteCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "server_cert.cer");
             //var remoteCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PFX", "server_cert.crt");
-            var security = new SecuritySettings(remoteCert, verifyRemote: false);
+            var security = SecuritySettings.Client(remoteCert, false);
             return new CepticClient(settings, security);
         }
 
@@ -50,7 +50,7 @@ namespace IntegrationTests.Helpers
             var localCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "server_cert.cer");
             var localKey = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "server_key.key");
             var remoteCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "client_cert.cer");
-            var security = new SecuritySettings(localCert, localKey, remoteCert);
+            var security = SecuritySettings.Server(localCert, localKey, remoteCert);
             return new CepticServer(settings, security);
         }
 
@@ -60,7 +60,7 @@ namespace IntegrationTests.Helpers
             var localCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "client_cert.cer");
             var localKey = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "client_key.key");
             var remoteCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "server_cert.cer");
-            var security = new SecuritySettings(localCert, localKey, remoteCert, verifyRemote: false);
+            var security = SecuritySettings.Client(localCert, localKey, remoteCert, false);
             return new CepticClient(settings, security);
         }
     }
