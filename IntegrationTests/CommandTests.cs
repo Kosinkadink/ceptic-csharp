@@ -174,12 +174,37 @@ namespace IntegrationTests
         #endregion
 
         #region Secure Server + Client
+        // NOTE: You need to import TestData/PEM/server_cert.cer into Trusted Root Certificate Authorities in ConsoleCert
+        // in order for this test to pass.
         [Test]
         public void Command_Secure_Success()
         {
             // Arrange
             server = CreateSecureServer(verbose: true);
             client = CreateSecureClient();
+
+            var command = CommandType.GET;
+            var endpoint = "/";
+
+            server.AddCommand(command);
+            server.AddRoute(command, endpoint, basicEndpointEntry);
+
+            var request = new CepticRequest(command, $"{localhostIPv4}{endpoint}");
+            // Act
+            server.Start();
+            var response = client.Connect(request);
+            // Assert
+            Assert.That(response.GetStatusCode(), Is.EqualTo(CepticStatusCode.OK));
+            Assert.That(response.GetBody().Length, Is.EqualTo(0));
+            Assert.That(response.GetExchange(), Is.False);
+        }
+
+        [Test]
+        public void Command_Secure_AllowAllCerts_Success()
+        {
+            // Arrange
+            server = CreateSecureServer(verbose: true);
+            client = CreateSecureClientAllowAllCerts();
 
             var command = CommandType.GET;
             var endpoint = "/";

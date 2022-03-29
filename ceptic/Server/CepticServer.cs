@@ -82,7 +82,7 @@ namespace Ceptic.Server
                     // try to load server certificate + key from combined file
                     try
                     {
-                        localCert = CertificateHelper.GenerateFromCombined(security.LocalCert);
+                        localCert = CertificateHelper.GenerateFromCombined(security.LocalCert, security.GetKeyPassword());
                     }
                     catch (SecurityException e)
                     {
@@ -95,7 +95,7 @@ namespace Ceptic.Server
                     // try to load server certificate + key from separate files
                     try
                     {
-                        localCert = CertificateHelper.GenerateFromSeparate(security.LocalCert, security.LocalKey);
+                        localCert = CertificateHelper.GenerateFromSeparate(security.LocalCert, security.LocalKey, security.GetKeyPassword());
                     }
                     catch (SecurityException e)
                     {
@@ -361,7 +361,7 @@ namespace Ceptic.Server
         {
             if (settings.verbose)
                 Console.WriteLine($"Got a connection from {client.Client.RemoteEndPoint}");
-            // TODO: wrap with SSL
+            // wrap with SSL
             SocketCeptic socket;
             if (security.Secure)
             {

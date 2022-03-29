@@ -38,6 +38,17 @@ namespace IntegrationTests.Helpers
         public static CepticClient CreateSecureClient(ClientSettings settings = null)
         {
             settings ??= new ClientSettings();
+            // NOTE: remoteCert does not matter, as code will only care about system certs
+            var remoteCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "server_cert.cer");
+            //var remoteCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PFX", "server_cert.crt");
+            var security = SecuritySettings.Client(remoteCert, true);
+            return new CepticClient(settings, security);
+        }
+
+        public static CepticClient CreateSecureClientAllowAllCerts(ClientSettings settings = null)
+        {
+            settings ??= new ClientSettings();
+            // NOTE: remoteCert does not matter, as code will only care about system certs
             var remoteCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "server_cert.cer");
             //var remoteCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PFX", "server_cert.crt");
             var security = SecuritySettings.Client(remoteCert, false);
@@ -60,7 +71,7 @@ namespace IntegrationTests.Helpers
             var localCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "client_cert.cer");
             var localKey = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "client_key.key");
             var remoteCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "server_cert.cer");
-            var security = SecuritySettings.Client(localCert, localKey, remoteCert, false);
+            var security = SecuritySettings.Client(localCert, localKey, remoteCert, true);
             return new CepticClient(settings, security);
         }
     }

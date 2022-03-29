@@ -52,7 +52,7 @@ namespace Ceptic.Client
                         // try to load server certificate + key from combined file
                         try
                         {
-                            localCert = CertificateHelper.GenerateFromCombined(security.LocalCert);
+                            localCert = CertificateHelper.GenerateFromCombined(security.LocalCert, security.GetKeyPassword());
                         }
                         catch (SecurityException e)
                         {
@@ -65,7 +65,7 @@ namespace Ceptic.Client
                         // try to load server certificate + key from separate files
                         try
                         {
-                            localCert = CertificateHelper.GenerateFromSeparate(security.LocalCert, security.LocalKey);
+                            localCert = CertificateHelper.GenerateFromSeparate(security.LocalCert, security.LocalKey, security.GetKeyPassword());
                         }
                         catch (SecurityException e)
                         {
@@ -261,19 +261,12 @@ namespace Ceptic.Client
                         sslStream.WriteTimeout = 5000;
                         try
                         {
-                            if (remoteCerts != null)
-                            {
-                                // TODO: add at least rudamentary support for non-system cert chains
-                                sslStream.AuthenticateAsClient(request.GetHost(), null,
+                            // NOTE: due to .NET Core requiring RemoteCertificateValidationCallback to be a static function,
+                            // the C# implementation cannot currently support non-system certs or cert chains. Thus,
+                            // remoteCerts is completely unused at this time.
+                            sslStream.AuthenticateAsClient(request.GetHost(), null,
                                     System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13,
                                     false);
-                            }
-                            else
-                            {
-                                sslStream.AuthenticateAsClient(request.GetHost(), null,
-                                    System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13,
-                                    false);
-                            }
                         }
                         catch (Exception e)
                         {

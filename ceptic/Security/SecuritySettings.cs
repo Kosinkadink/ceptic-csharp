@@ -6,12 +6,46 @@ namespace Ceptic.Security
 {
     public class SecuritySettings
     {
+        private string _KeyPassword = null;
+
+        /// <summary>
+        /// Local Key password that gets turned to null after a single use
+        /// </summary>
+        public string KeyPassword {
+            set
+            {
+                SetKeyPassword(value);
+            }
+        }
+
         public string LocalCert { get; } = null;
         public string LocalKey { get; } = null;
         public string RemoteCert { get; } = null;
         public bool VerifyRemote { get; } = true;
         public bool Secure { get; } = true;
-        
+
+        #region Key Password
+        /// <summary>
+        /// Set local key password - will be turned to null upon reading with GetKeyPassword
+        /// </summary>
+        /// <param name="password"> Local Key password</param>
+        public void SetKeyPassword(string password)
+        {
+            _KeyPassword = password;
+        }
+
+        /// <summary>
+        /// Return local key's password, turning it to null in the process
+        /// </summary>
+        /// <returns>Local Key password</returns>
+        public string GetKeyPassword()
+        {
+            string tempPassword = _KeyPassword;
+            _KeyPassword = null;
+            return tempPassword;
+        }
+        #endregion
+
         protected SecuritySettings()
         {
 

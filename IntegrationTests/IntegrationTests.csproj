@@ -11,9 +11,12 @@
     <None Remove="TestData\PEM\client_cert.cer" />
     <None Remove="TestData\PEM\client_key.key" />
     <None Remove="TestData\PEM\server.combined.cer" />
+    <None Remove="TestData\PEM\server.combined_enc.cer" />
     <None Remove="TestData\PEM\server_cert.cer" />
     <None Remove="TestData\PEM\server_key.key" />
+    <None Remove="TestData\PEM\server_key_enc.key" />
     <None Remove="TestData\PFX\server.combined.pfx" />
+    <None Remove="TestData\PFX\server.combined_enc.pfx" />
     <None Remove="TestData\PFX\server_cert.crt" />
     <None Remove="TestData\PFX\server_cert.pfx" />
   </ItemGroup>
@@ -31,13 +34,22 @@
     <Content Include="TestData\PEM\server.combined.cer">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="TestData\PEM\server.combined_enc.cer">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="TestData\PEM\server_cert.cer">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="TestData\PEM\server_key.key">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="TestData\PEM\server_key_enc.key">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="TestData\PFX\server.combined.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\PFX\server.combined_enc.pfx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="TestData\PFX\server_cert.crt">

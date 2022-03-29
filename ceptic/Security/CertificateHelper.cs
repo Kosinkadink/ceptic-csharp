@@ -23,7 +23,7 @@ namespace Ceptic.Security
         private const string PublicKey = "PUBLIC KEY";
         private const string CertificateString = "CERTIFICATE";
 
-        public static X509Certificate2 GenerateFromSeparate(string certificate, string key)
+        public static X509Certificate2 GenerateFromSeparate(string certificate, string key, string password)
         {
             // load public key
             X509Certificate2 cert;
@@ -38,7 +38,7 @@ namespace Ceptic.Security
             // load private key
             try
             {
-                AddPEMPrivateKeyToCertificate(cert, key, out cert);
+                AddPEMPrivateKeyToCertificate(cert, key, password, out cert);
             }
             catch (SecurityException e)
             {
@@ -49,16 +49,16 @@ namespace Ceptic.Security
             return cert;
         }
 
-        public static X509Certificate2 GenerateFromCombined(string certificate)
+        public static X509Certificate2 GenerateFromCombined(string certificate, string password)
         {
             try
             {
-                var cert = new X509Certificate2(certificate);
+                var cert = password == null ? new X509Certificate2(certificate) : new X509Certificate2(certificate, password);
                 if (cert.PrivateKey == null)
                 {
                     try
                     {
-                        AddPEMPrivateKeyToCertificate(cert, certificate, out cert);
+                        AddPEMPrivateKeyToCertificate(cert, certificate, password, out cert);
                         if (cert.PrivateKey == null)
                             throw new SecurityException($"Certificate at did not include a private key as expected." +
                                 "Either use a file containing both certificate and key, or provide both cert and key files.");
@@ -81,7 +81,7 @@ namespace Ceptic.Security
             }
         }
 
-        private static void AddPEMPrivateKeyToCertificate(X509Certificate2 cert, string key, out X509Certificate2 combined)
+        private static void AddPEMPrivateKeyToCertificate(X509Certificate2 cert, string key, string password, out X509Certificate2 combined)
         {
             string pemRaw = null;
             try
@@ -112,8 +112,8 @@ namespace Ceptic.Security
                             rsa.ImportRSAPrivateKey(pemBytes, out _); break;
                         case PrivateKey:
                             rsa.ImportPkcs8PrivateKey(pemBytes, out _); break;
-                        /*case EncryptedPrivateKey:
-                            rsa.ImportEncryptedPkcs8PrivateKey(pemBytes, out _); break;*/
+                        case EncryptedPrivateKey:
+                            rsa.ImportEncryptedPkcs8PrivateKey(password, pemBytes, out _); break;
                         case RSAPublicKey:
                         case PublicKey:
                         case CertificateString:
