@@ -60,7 +60,7 @@ namespace Ceptic.Security
                     {
                         AddPEMPrivateKeyToCertificate(cert, certificate, password, out cert);
                         if (cert.PrivateKey == null)
-                            throw new SecurityException($"Certificate at did not include a private key as expected." +
+                            throw new SecurityException($"Certificate at '{certificate}' did not include a private key as expected." +
                                 "Either use a file containing both certificate and key, or provide both cert and key files.");
                     }
                     catch (SecurityPEMException e)
@@ -69,7 +69,7 @@ namespace Ceptic.Security
                     }
                     catch (Exception e)
                     {
-                        throw new SecurityException($"Certificate at did not include a private key as expected." +
+                        throw new SecurityException($"Certificate at '{certificate}' did not include a private key as expected." +
                             "Either use a file containing both certificate and key, or provide both cert and key files.", e);
                     }
                 }
