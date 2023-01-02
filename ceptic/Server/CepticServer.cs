@@ -458,7 +458,7 @@ namespace Ceptic.Server
                 var errorString = errors.Length > 1024 ? errors.ToString().Substring(0, 1024) : errors.ToString();
                 socket.Send(errorString);
                 if (settings.verbose)
-                    Console.WriteLine("Client not compaible with server settings, connection terminated.");
+                    Console.WriteLine("Client not compatible with server settings, connection terminated.");
                 socket.Close();
                 return;
             }

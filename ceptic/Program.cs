@@ -3,6 +3,7 @@ using Ceptic.Common;
 using Ceptic.Endpoint;
 using Ceptic.Security;
 using Ceptic.Server;
+using Ceptic.Stream.Exceptions;
 using System;
 using System.Diagnostics;
 using System.Text;
@@ -19,14 +20,14 @@ namespace ceptic
             Console.WriteLine("Hello World!");
 
             //DoServer();
-            DoClient();
-            //DoClientExchange();
+            //DoClient();
+            DoClientExchange();
         }
 
         static void DoClientExchange()
         {
             var clientSettings = new ClientSettings();
-            var client = new CepticClient(clientSettings);
+            var client = new CepticClient(clientSettings, SecuritySettings.ClientUnsecure());
 
             var request = new CepticRequest(CommandType.GET, $"{localhostIPv4}/exchange");
             request.SetExchange(true);
@@ -50,7 +51,8 @@ namespace ceptic
                     var receivedData = data.GetData();
                     if (receivedData == null)
                         Console.WriteLine($"Received null when expecting {stringData}");
-                    Console.WriteLine($"Received echo: {Encoding.UTF8.GetString(receivedData)}");
+                    if (i % 500 == 0)
+                        Console.WriteLine($"Received echo: {Encoding.UTF8.GetString(receivedData)}");
 
                 }
                 if (!hasReceivedResponse)
@@ -97,6 +99,45 @@ namespace ceptic
             server.AddCommand(CommandType.GET);
             server.AddRoute(CommandType.GET, "/",
                 new EndpointEntry((request, values) => new CepticResponse(CepticStatusCode.OK)));
+
+            server.AddRoute(CommandType.GET, "/exchange",
+                new EndpointEntry((request, values) =>
+                {
+                    var stream = request.BeginExchange();
+                    if (stream == null)
+                        return new CepticResponse(CepticStatusCode.UNEXPECTED_END);
+
+                    try
+                    {
+                        var previousData = "";
+                        var count = 0;
+                        while (true)
+                        {
+                            var streamData = stream.ReadData(100);
+                            if (streamData.IsEmpty())
+                                continue;
+                            count++;
+                            var data = Encoding.UTF8.GetString(streamData.GetData());
+                            if (count % 500 == 0)
+                                Console.WriteLine($"DATA: {data}");
+                            if (data == "exit")
+                            {
+                                Console.WriteLine("Client requested end of exchange!");
+                                break;
+                            }
+                            else
+                            {
+                                stream.SendData(streamData.GetData());
+                            }
+                        }
+                    }
+                    catch (StreamException e)
+                    {
+                        Console.WriteLine($"StreamException: {e}");
+                    }
+                    return new CepticResponse(CepticStatusCode.OK);
+                }
+                ));
 
             server.Start();
             //DoClient();
