@@ -1,4 +1,5 @@
 ﻿using Ceptic.Security;
+using Ceptic.Security.Exceptions;
 using Ceptic.Server;
 using NUnit.Framework;
 using System;
@@ -47,6 +48,20 @@ namespace IntegrationTests
             security.SetKeyPassword("ceptic");
             // Act, Assert
             Assert.That(() => new CepticServer(settings, security), Throws.Nothing);
+        }
+
+        [Test]
+        public void Server_Secure_PEM_Encrypted_WrongPassword()
+        {
+            // Arrange
+            var settings = new ServerSettings(verbose: true);
+
+            var localCert = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "server_cert.cer");
+            var localKey = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "PEM", "server_key_enc.key");
+            var security = SecuritySettings.Server(localCert, localKey);
+            security.SetKeyPassword("wrongpassword");
+            // Act, Assert
+            Assert.That(() => new CepticServer(settings, security), Throws.InstanceOf<SecurityException>());
         }
 
         [Test]

@@ -243,7 +243,7 @@ namespace Ceptic.Client
                 // create tcp client and connect
                 var tcpClient = new TcpClient(request.GetHost(), request.GetPort());
                 tcpClient.NoDelay = true;
-                tcpClient.SendTimeout = 5000;
+                tcpClient.SendTimeout = 5000; // TODO: set all timeouts to match settings
                 tcpClient.ReceiveTimeout = 5000;
 
                 // connect the socket to the remove endpoint
@@ -308,8 +308,8 @@ namespace Ceptic.Client
                     // otherwise received decided values
                     var serverFrameMaxSizeStr = socket.RecvRawString(16).Trim();
                     var serverHeaderMaxSizeStr = socket.RecvRawString(16).Trim();
-                    string serverStreamTimeoutStr = socket.RecvRawString(4).Trim();
-                    string serverHandlerMaxCountStr = socket.RecvRawString(4).Trim();
+                    var serverStreamTimeoutStr = socket.RecvRawString(4).Trim();
+                    var serverHandlerMaxCountStr = socket.RecvRawString(4).Trim();
 
                     // attempt to convert to integers
                     int frameMaxSize;
@@ -354,15 +354,15 @@ namespace Ceptic.Client
                 {
                     throw e;
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
-                    throw e;
+                    throw;
                 }
 
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                throw e;
+                throw;
             }
         }
 

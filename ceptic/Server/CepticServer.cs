@@ -204,7 +204,7 @@ namespace Ceptic.Server
                     {
                         if (settings.verbose)
                             Console.WriteLine($"Unexpected issue with CreateNewManager: {e}");
-                        throw e;
+                        throw;
                     }
                 },
                 cancellationToken, TaskCreationOptions.LongRunning).Start();
@@ -258,12 +258,12 @@ namespace Ceptic.Server
             return true;
         }
 
-        public bool Join(TimeSpan timeSpan)
+        public bool Join(TimeSpan? timeSpan)
         {
             if (runThread == null)
                 return true;
             if (timeSpan != null)
-                return runThread.Join(timeSpan);
+                return runThread.Join((TimeSpan)timeSpan);
             runThread.Join();
             return true;
         }
@@ -366,7 +366,7 @@ namespace Ceptic.Server
             if (security.Secure)
             {
                 var sslStream = new SslStream(client.GetStream(), false);
-                sslStream.ReadTimeout = 5000;
+                sslStream.ReadTimeout = 5000; // TODO: set all timeouts to match setting
                 sslStream.WriteTimeout = 5000;
                 try
                 {
