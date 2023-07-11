@@ -69,12 +69,15 @@ namespace Ceptic.Endpoint
 
         public EndpointValue GetEndpoint(string endpoint)
         {
+            // separate query string from endpoint
+            var parsed = SeparateQuerystring(endpoint);
+            endpoint = parsed.Endpoint;
             // check that endpoint is not empty
             if (string.IsNullOrWhiteSpace(endpoint))
                 throw new EndpointManagerException("endpoint cannot be empty");
             // check if using allowed characters
             if (!allowedRegex.IsMatch(endpoint))
-                throw new EndpointManagerException($"endpoint '{endpoint}' contains invalid characcters");
+                throw new EndpointManagerException($"endpoint '{endpoint}' contains invalid characters");
             // remove '/' at end of endpoint
             endpoint = endSlashRegex.Replace(endpoint, "", 1);
             // add '/' to start of endpoint if not present
@@ -109,7 +112,7 @@ namespace Ceptic.Endpoint
                 values.Add(variableName, matchCollection[0].Groups[index].Value);
                 index++;
             }
-            return new EndpointValue(matchEndpointSaved.GetEntry(), values, matchEndpointSaved.GetSettings());
+            return new EndpointValue(matchEndpointSaved.GetEntry(), values, parsed.Queryparams, parsed.Querystring, matchEndpointSaved.GetSettings());
         }
 
         public EndpointSaved RemoveEndpoint(string endpoint)
@@ -170,7 +173,7 @@ namespace Ceptic.Endpoint
             {
                 // add braces to either side of variable name (escape twice)
                 string safeBraces = Regex.Escape(Regex.Escape($"<{variableName}>"));
-                // variable contained in braces '<variable>' acts as teh string to substitute;
+                // variable contained in braces '<variable>' acts as the string to substitute;
                 // regex statement is put in its place for usage when looking up proper endpoint
                 endpoint = new Regex(safeBraces).Replace(endpoint, replacementRegexString, 1);
             }
@@ -178,6 +181,30 @@ namespace Ceptic.Endpoint
             endpoint = $"^{endpoint}$";
             // return pattern generated from endpoint
             return new EndpointPattern(new Regex(endpoint, RegexOptions.Compiled), variableNames);
+        }
+
+        protected ParsedEndpoint SeparateQuerystring(string rawEndpoint)
+        {
+            var split = rawEndpoint.Split('?', 2);
+            // if nothing to split, return default values
+            if (split.Length == 1)
+            {
+                return new ParsedEndpoint(rawEndpoint, "", new Dictionary<string, string>());
+            }
+            var endpoint = split[0];
+            var querystring = split[1];
+            var queryparams = new Dictionary<string, string>();
+            // parse query params from query string
+            if (!string.IsNullOrEmpty(querystring))
+            {
+                var paramPairs = querystring.Split('&');
+                foreach(var pair in paramPairs)
+                {
+                    var varValue = pair.Split('=', 2);
+                    queryparams[varValue[0]] = varValue[1];
+                }
+            }
+            return new ParsedEndpoint(endpoint, querystring, queryparams);
         }
 
     }

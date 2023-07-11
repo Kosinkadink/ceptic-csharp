@@ -20,8 +20,8 @@ namespace ceptic
             Console.WriteLine("Hello World!");
 
             //DoServer();
-            //DoClient();
-            DoClientExchange();
+            DoClient();
+            //DoClientExchange();
         }
 
         static void DoClientExchange()
@@ -78,9 +78,9 @@ namespace ceptic
             var connectStopwatch = new Stopwatch();
             var sw = new Stopwatch();
             sw.Start();
-            for (int i = 0; i < 10000; i++)
+            for (int i = 0; i < 50; i++)
             {
-                var request = new CepticRequest("get", $"{localhostIPv4}:9000");
+                var request = new CepticRequest("get", $"{localhostIPv4}:9000/");
                 connectStopwatch.Restart();
                 var response = client.Connect(request);
                 connectStopwatch.Stop();
@@ -98,10 +98,10 @@ namespace ceptic
 
             server.AddCommand(CommandType.GET);
             server.AddRoute(CommandType.GET, "/",
-                new EndpointEntry((request, values) => new CepticResponse(CepticStatusCode.OK)));
+                new EndpointEntry((request) => new CepticResponse(CepticStatusCode.OK)));
 
             server.AddRoute(CommandType.GET, "/exchange",
-                new EndpointEntry((request, values) =>
+                new EndpointEntry((request) =>
                 {
                     var stream = request.BeginExchange();
                     if (stream == null)

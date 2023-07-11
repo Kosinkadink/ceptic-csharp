@@ -66,7 +66,7 @@ namespace Ceptic.Stream
         public void Send(SocketCeptic s)
         {
             // send stream id
-            s.SendRaw(Encoding.UTF8.GetBytes(streamId.ToString()));
+            s.SendRaw(Encoding.UTF8.GetBytes(streamId.ToString())); // TODO: replace with raw bytes
             // send type
             s.SendRaw(type.byteArray);
             // send info
@@ -95,9 +95,9 @@ namespace Ceptic.Stream
             {
                 streamId = Guid.Parse(rawStringId);
             }
-            catch (FormatException)
+            catch (FormatException e)
             {
-                throw new StreamFrameSizeException($"received rawStreamId could not be parsed to Guid: {rawStringId}");
+                throw new StreamFrameSizeException($"Received stream id could not be parsed to Guid: {rawStringId}", e);
             }
             // get type
             var rawType = s.RecvRawString(1);
@@ -117,14 +117,14 @@ namespace Ceptic.Stream
             {
                 dataLength = int.Parse(rawDataLength);
             }
-            catch (FormatException)
+            catch (FormatException e)
             {
                 throw new StreamFrameSizeException(
-                    $"received dataLength could not be parsed to int: {streamId},{type},{info},{rawDataLength}");
+                    $"Received dataLength could not be parsed to int: {streamId},{type},{info},{rawDataLength}", e);
             }
             // if data length greater than max length, raise exception
             if (dataLength > maxDataLength)
-                throw new StreamFrameSizeException($"dataLength ({dataLength}) greater than allowed max length {maxDataLength}");
+                throw new StreamFrameSizeException($"DataLength ({dataLength}) greater than allowed max length {maxDataLength}");
             // if data length not zero, get data
             byte[] data = new byte[0];
             if (dataLength > 0)

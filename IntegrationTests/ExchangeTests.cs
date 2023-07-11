@@ -43,7 +43,7 @@ namespace IntegrationTests
             var endpoint = "/";
 
             server.AddCommand(command);
-            server.AddRoute(command, endpoint, new EndpointEntry((request, values) => {
+            server.AddRoute(command, endpoint, new EndpointEntry((request) => {
                 var stream = request.BeginExchange();
                 if (stream == null)
                 {
@@ -92,7 +92,7 @@ namespace IntegrationTests
             var endpoint = "/";
 
             server.AddCommand(command);
-            server.AddRoute(command, endpoint, new EndpointEntry((request, values) => {
+            server.AddRoute(command, endpoint, new EndpointEntry((request) => {
                 var stream = request.BeginExchange();
                 if (stream == null)
                 {
@@ -160,7 +160,7 @@ namespace IntegrationTests
             var endpoint = "/";
 
             server.AddCommand(command);
-            server.AddRoute(command, endpoint, new EndpointEntry((request, values) => {
+            server.AddRoute(command, endpoint, new EndpointEntry((request) => {
                 var stream = request.BeginExchange();
                 if (stream == null)
                 {
@@ -201,7 +201,7 @@ namespace IntegrationTests
             var endpoint = "/";
 
             server.AddCommand(command);
-            server.AddRoute(command, endpoint, new EndpointEntry((request, values) => {
+            server.AddRoute(command, endpoint, new EndpointEntry((request) => {
                 var stream = request.BeginExchange();
                 if (stream == null)
                 {

@@ -154,13 +154,14 @@ namespace Ceptic.Client
 
             StreamManager manager;
             StreamHandler handler;
+            // if Normal, check if a manager is available for destination
             if (spread == SpreadType.Normal)
             {
                 manager = GetAvailableManagerForDestination(destination);
                 if (manager != null)
                 {
                     handler = manager.CreateHandler();
-                    // connect to ser ver with thsi handler, returning CepticResponse
+                    // connect to server with this handler, returning CepticResponse
                     return ConnectWithHandler(handler, request);
                 }
             }
@@ -246,7 +247,7 @@ namespace Ceptic.Client
                 tcpClient.SendTimeout = 5000; // TODO: set all timeouts to match settings
                 tcpClient.ReceiveTimeout = 5000;
 
-                // connect the socket to the remove endpoint
+                // connect the socket to the remote endpoint
                 try
                 {
                     // set up ssl stream
@@ -305,7 +306,7 @@ namespace Ceptic.Client
                         string errorString = socket.RecvString(1024);
                         throw new CepticIOException($"Client settings not compatible with server settings: {errorString}");
                     }
-                    // otherwise received decided values
+                    // otherwise receive decided values
                     var serverFrameMaxSizeStr = socket.RecvRawString(16).Trim();
                     var serverHeaderMaxSizeStr = socket.RecvRawString(16).Trim();
                     var serverStreamTimeoutStr = socket.RecvRawString(4).Trim();
@@ -348,11 +349,11 @@ namespace Ceptic.Client
                 }
                 catch (ArgumentNullException e)
                 {
-                    throw e;
+                    throw;
                 }
                 catch (SocketException e)
                 {
-                    throw e;
+                    throw;
                 }
                 catch (Exception)
                 {

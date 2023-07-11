@@ -281,7 +281,7 @@ namespace Ceptic.Server
             if (request.GetCommand().Length > Constants.COMMAND_LENGTH)
                 errors.Add($"command too long; should be no more than {Constants.COMMAND_LENGTH} but was {request.GetCommand().Length}");
             if (request.GetEndpoint().Length > Constants.ENDPOINT_LENGTH)
-                errors.Add($"command too long; should be no more than {Constants.ENDPOINT_LENGTH} but was {request.GetEndpoint().Length}");
+                errors.Add($"endpoint too long; should be no more than {Constants.ENDPOINT_LENGTH} but was {request.GetEndpoint().Length}");
             // if no errors yet, get endpoint from endpoint manager
             EndpointValue endpointValue = null;
             if (errors.Count == 0)
@@ -512,7 +512,7 @@ namespace Ceptic.Server
             if (clientMax <= serverMax)
             {
                 if (clientMax < serverMin)
-                    error = $"client max {settingName} ({clientMax}) is greater than server's max ({serverMax})";
+                    error = $"client max {settingName} ({clientMax}) is less than server's min ({serverMin})";
                 else
                     value = clientMax;
             }

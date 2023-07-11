@@ -113,7 +113,7 @@ namespace UnitTests.Endpoint
             var endpoints = new List<string>();
             // endpoint can be a single slash
             endpoints.Add("/");
-            // endpopint can be composed of any alphanumerics as well as -.<>_/ characters
+            // endpoint can be composed of any alphanumerics as well as -.<>_/ characters
             // (but <> have to be enclosing something)
             string goodVariableStartCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
             string goodVariableCharacters = goodVariableStartCharacters + "1234567890";
@@ -124,7 +124,7 @@ namespace UnitTests.Endpoint
                 endpoints.Add($"{character}/test");
                 endpoints.Add($"test/{character}");
             }
-            // endpoint can contain braces for variable portion or url; they ahve to enclose something
+            // endpoint can contain braces for variable portion or url; they have to enclose something
             endpoints.Add("good/<braces>");
             endpoints.Add("<braces>");
             endpoints.Add("<good>/braces");

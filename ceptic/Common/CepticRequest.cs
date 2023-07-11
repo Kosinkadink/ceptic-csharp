@@ -16,6 +16,10 @@ namespace Ceptic.Common
         private byte[] body;
         private string url = "";
 
+        private string querystring;
+        private Dictionary<string, string> values;
+        private Dictionary<string, string> queryparams;
+
         private StreamHandler stream;
 
         private string host;
@@ -91,6 +95,40 @@ namespace Ceptic.Common
         public int GetPort()
         {
             return port;
+        }
+        
+        public Dictionary<string, string> Values
+        {
+            get
+            {
+                return values;
+            }
+            set
+            {
+                values = value;
+            }
+        }
+        public Dictionary<string, string> Queryparams
+        {
+            get
+            {
+                return queryparams;
+            }
+            set
+            {
+                queryparams = value;
+            }
+        }
+        public string Querystring
+        {
+            get
+            {
+                return querystring;
+            }
+            set
+            {
+                querystring = value;
+            }
         }
         #endregion
 

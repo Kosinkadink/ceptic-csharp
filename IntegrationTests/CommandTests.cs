@@ -13,7 +13,7 @@ namespace IntegrationTests
 {
     public class Tests : CepticInitializers
     {
-        private EndpointEntry basicEndpointEntry = new EndpointEntry((request, values) => new CepticResponse(CepticStatusCode.OK));
+        private EndpointEntry basicEndpointEntry = new EndpointEntry((request) => new CepticResponse(CepticStatusCode.OK));
         private CepticServer server;
         private CepticClient client;
 
@@ -67,7 +67,7 @@ namespace IntegrationTests
             var endpoint = "/";
 
             server.AddCommand(command);
-            server.AddRoute(command, endpoint, new EndpointEntry((request, variables) => {
+            server.AddRoute(command, endpoint, new EndpointEntry((request) => {
                 Console.WriteLine($"Received body: {Encoding.UTF8.GetString(request.GetBody())}");
                 return new CepticResponse(CepticStatusCode.OK, request.GetBody());
             }));
@@ -115,7 +115,7 @@ namespace IntegrationTests
             byte[] expectedBody = Encoding.UTF8.GetBytes("Hello world!");
 
             server.AddCommand(command);
-            server.AddRoute(command, endpoint, new EndpointEntry((request, values) =>
+            server.AddRoute(command, endpoint, new EndpointEntry((request) =>
             {
                 return new CepticResponse(CepticStatusCode.OK, body: request.GetBody());
             }));
@@ -151,9 +151,48 @@ namespace IntegrationTests
             byte[] expectedBody = Encoding.UTF8.GetBytes($"{variableName1} was {expectedValue1}, {variableName2} was {expectedValue2}");
 
             server.AddCommand(command);
-            server.AddRoute(command, registerEndpoint, new EndpointEntry((request, values) =>
+            server.AddRoute(command, registerEndpoint, new EndpointEntry((request) =>
             {
-                var stringResult = $"{variableName1} was {values[variableName1]}, {variableName2} was {values[variableName2]}";
+                var stringResult = $"{variableName1} was {request.Values[variableName1]}, {variableName2} was {request.Values[variableName2]}";
+                if (request.GetStream().GetSettings().verbose)
+                    Console.WriteLine($"Sending body: {stringResult}");
+                return new CepticResponse(CepticStatusCode.OK, body: Encoding.UTF8.GetBytes(stringResult));
+            }));
+
+            var request = new CepticRequest(command, $"{localhostIPv4}/{endpoint}", body: expectedBody);
+            // Act
+            server.Start();
+            var response = client.Connect(request);
+            // Assert
+            Assert.That(response.GetStatusCode(), Is.EqualTo(CepticStatusCode.OK));
+            Assert.That(response.GetBody(), Is.EqualTo(expectedBody));
+            Assert.That(response.GetExchange(), Is.False);
+
+            Assert.That(request.GetContentLength(), Is.EqualTo(expectedBody.Length));
+            Assert.That(response.GetContentLength(), Is.EqualTo(expectedBody.Length));
+        }
+
+        [Test]
+        public void Command_Unsecure_EchoQueryparams_Success()
+        {
+            // Arrange
+            server = CreateUnsecureServer(verbose: true);
+            client = CreateUnsecureClient();
+
+            var command = CommandType.GET;
+            var variableName1 = "var1";
+            var variableName2 = "var2";
+            var registerEndpoint = $"/";
+            var expectedValue1 = Guid.NewGuid().ToString();
+            var expectedValue2 = Guid.NewGuid().ToString();
+            var endpoint = $"/?{variableName1}={expectedValue1}&{variableName2}={expectedValue2}";
+
+            byte[] expectedBody = Encoding.UTF8.GetBytes($"{variableName1} was {expectedValue1}, {variableName2} was {expectedValue2}");
+
+            server.AddCommand(command);
+            server.AddRoute(command, registerEndpoint, new EndpointEntry((request) =>
+            {
+                var stringResult = $"{variableName1} was {request.Queryparams[variableName1]}, {variableName2} was {request.Queryparams[variableName2]}";
                 if (request.GetStream().GetSettings().verbose)
                     Console.WriteLine($"Sending body: {stringResult}");
                 return new CepticResponse(CepticStatusCode.OK, body: Encoding.UTF8.GetBytes(stringResult));
